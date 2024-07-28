@@ -4,12 +4,11 @@
 #include <string>
 #include <variant>
 
-enum class TokenType : std::size_t {
+enum class TokenType {
   // Keywords
-  BOOL = 0,
+  BOOL,
   FLOAT,
   STRING,
-  INT,
   IF,
   FOR,
   WHILE,
@@ -69,12 +68,15 @@ enum class TokenType : std::size_t {
   INVALID
 };
 
+using LiteralVariant = std::variant<None, std::string>;
+
 struct Token {
   std::string Lexeme;
   std::size_t Line;
-  std::variant<None> Value;
+  LiteralVariant Value;
   TokenType Type;
 };
 
 auto toString(TokenType type) -> std::string;
+
 #endif // !TOKEN_H

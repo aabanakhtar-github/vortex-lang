@@ -23,8 +23,14 @@ private:
   auto peek() -> char;
   auto consume() -> char;
   auto convertIdentifier() -> TokenType;
+  auto addToken(TokenType type, LiteralVariant value = None{}) -> void;
+
+  auto addNumber() -> void;
+  auto addString() -> void;
+  auto addIdentifierOrKeyword() -> void;
 
 private:
+  std::size_t token_start_ = 0;
   std::size_t pos_ = 0;
   std::size_t line_ = 1;
   std::ofstream *debug_file_;

@@ -14,9 +14,6 @@ auto toString(TokenType type) -> std::string {
   case TokenType::STRING:
     ss << "STRING";
     break;
-  case TokenType::INT:
-    ss << "INT";
-    break;
   case TokenType::IF:
     ss << "IF";
     break;
