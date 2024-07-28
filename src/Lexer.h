@@ -28,6 +28,7 @@ private:
   auto addNumber() -> void;
   auto addString() -> void;
   auto addIdentifierOrKeyword() -> void;
+  auto removeComment() -> void;
 
 private:
   std::size_t token_start_ = 0;

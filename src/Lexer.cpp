@@ -19,7 +19,7 @@ auto Lexer::lex() -> void {
     case '\r':
       break;
     case '#':
-      // TODO: add comments!!
+      removeComment();
       break;
     case '(':
       addToken(TokenType::L_PAREN);
@@ -46,7 +46,6 @@ auto Lexer::lex() -> void {
       addToken(TokenType::SEMICOLON);
       break;
     case '"':
-      consume(); // consume the first quote
       addString();
       break;
     default:
@@ -91,9 +90,8 @@ auto Lexer::addToken(TokenType type, LiteralVariant value) -> void {
 auto Lexer::addString() -> void {
   auto error = bool{false};
   auto ch = consume();
-  while (ch != '"' && pos_ < file_.size()) {
+  while (pos_ < file_.size() && ch != '"') {
     if (ch == '\n') {
-      std::cout << "hi!" << "\n";
       ++line_;
     }
     ch = consume();
@@ -110,3 +108,9 @@ auto Lexer::addString() -> void {
 auto Lexer::addIdentifierOrKeyword() -> void {}
 
 auto Lexer::addNumber() -> void {}
+
+auto Lexer::removeComment() -> void {
+  while (pos_ < file_.size() && consume() != '\n') {
+  }
+  line_++;
+}
