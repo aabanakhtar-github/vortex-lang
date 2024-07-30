@@ -14,10 +14,12 @@ auto main(int argc, char *argv[]) -> int {
   lex.lex();
   auto x = lex.getTokens();
   for (auto &tok : x) {
-    std::cout << toString(tok.Type) << tok.Lexeme << std::endl;
+    std::cout << "TYPE:" << toString(tok.Type) << " LINE:" << tok.Line
+              << " Lexeme:[" << tok.Lexeme << "]";
     if (tok.Value.index() == 1) {
-      std::cout << "STRING: " << std::get<std::string>(tok.Value) << "\n";
+      std::cout << " STR:" << std::get<std::string>(tok.Value);
     }
+    std::cout << std::endl;
   }
   std::cin.get();
   return 0;

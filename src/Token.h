@@ -19,24 +19,25 @@ enum class TokenType {
   EXTERN,
 
   // Data Types
-  BOOLEAN_LITERAL, // true, false
-  FLOAT_LITERAL,   // e.g., 2.3
-  STRING_LITERAL,  // e.g., "Hello World"
-  INTEGER_LITERAL, // e.g., 5
+  TRUE,
+  FALSE,          // boolean literals e.g true false
+  FLOAT_LITERAL,  // e.g., 2.3
+  STRING_LITERAL, // e.g., "Hello World"
 
   // Operators
-  PLUS,         // +
-  MINUS,        // -
-  AND,          // &&
-  OR,           // ||
-  NOT,          // !
-  LESS_THAN,    // <
-  GREATER_THAN, // >
-  ASSIGNMENT,   // =
-  EQUALITY,     // ==
-  INEQUALITY,   // !=
-  ARROW,        // ->
-  DOT,          // .
+  PLUS,                  // +
+  MINUS,                 // -
+  AND,                   // &&
+  OR,                    // ||
+  NOT,                   // !
+  LESS_THAN,             // <
+  GREATER_THAN,          // >
+  GREATER_THAN_OR_EQUAL, // >=
+  LESS_THAN_OR_EQUAL,    // <=
+  ASSIGNMENT,            // ->
+  EQUALITY,              // =
+  INEQUALITY,            // !=
+  DOT,                   // .
 
   // Symbols
   L_PAREN,   // (
@@ -48,17 +49,8 @@ enum class TokenType {
   SEMICOLON, // ;
   COMMA,     // ,
 
-  // Control Flow
-  IF_CONTROL,    // if
-  FOR_CONTROL,   // for
-  WHILE_CONTROL, // while
-
-  // Collection Types
-  ARRAY, // Array keyword
-
-  // Class and Method Definitions
-  CLASS_DEF, // class
-  METHOD,    // Method names like doSomething, etc.
+  ARRAY,      // Array keyword
+  IDENTIFIER, // name
 
   // External Modules names
   EXTERN_MODULE, // extern

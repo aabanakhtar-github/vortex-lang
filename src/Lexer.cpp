@@ -1,8 +1,8 @@
 #include "Lexer.h"
 #include "Error.h"
 #include "Token.h"
+#include <cctype>
 #include <format>
-#include <iostream>
 
 Lexer::Lexer(std::string_view file, std::string_view filename,
              std::ofstream *debug_file)
@@ -10,12 +10,12 @@ Lexer::Lexer(std::string_view file, std::string_view filename,
 
 auto Lexer::lex() -> void {
   while (pos_ < file_.size()) {
-    switch (char ch = consume()) {
+    switch (auto ch = consume()) {
     case '\n':
       line_++;
       break;
     case ' ':
-    case '\t':
+    case '\t': // something historic i think
     case '\r':
       break;
     case '#':
@@ -45,16 +45,65 @@ auto Lexer::lex() -> void {
     case ';':
       addToken(TokenType::SEMICOLON);
       break;
+    case '=':
+      addToken(TokenType::EQUALITY);
+      break;
     case '"':
       addString();
       break;
-    default:
-      if (isalpha(ch)) {
-        addIdentifierOrKeyword();
+    case '-':
+      if (peek() == '>') {
+        consume(); // the right angle
+        addToken(TokenType::ASSIGNMENT);
+      } else {
+        addToken(TokenType::MINUS);
+      }
+      break;
+    case '>':
+      if (peek() == '=') {
+        consume();
+        addToken(TokenType::GREATER_THAN_OR_EQUAL);
+      } else {
+        addToken(TokenType::GREATER_THAN);
+      }
+      break;
+    case '<':
+      if (peek() == '=') {
+        consume();
+        addToken(TokenType::LESS_THAN_OR_EQUAL);
+      } else {
+        addToken(TokenType::LESS_THAN);
+      }
+      break;
+    case '!':
+      if (peek() == '=') {
+        consume();
+        addToken(TokenType::INEQUALITY);
+      } else {
+        addToken(TokenType::NOT);
+      }
+      break;
+    case '&':
+      if (peek() != '&') {
+        reportError("Expected & after &!", file_, line_);
+        addToken(TokenType::INVALID);
         break;
       }
-      if (isdigit(ch)) {
-        addNumber();
+      consume();
+      addToken(TokenType::AND);
+      break;
+    case '|':
+      if (peek() != '|') {
+        reportError("Expected | after |!", file_, line_);
+        addToken(TokenType::INVALID);
+        break;
+      }
+      consume();
+      addToken(TokenType::OR);
+      break;
+    default:
+      if (isalpha(ch)) {
+        addIdentifierOrKeyword(ch);
         break;
       }
       reportError(std::format("Unexpected token '{}'!", ch), filename_, line_);
@@ -67,13 +116,6 @@ auto Lexer::lex() -> void {
   addToken(TokenType::END_OF_FILE);
 }
 
-auto Lexer::peek() -> char {
-  if (pos_ + 1 > file_.size()) {
-    return '\0';
-  }
-  return file_[pos_ + 1];
-}
-
 auto Lexer::consume() -> char {
   pos_++;
   return file_[pos_ - 1];
@@ -82,8 +124,9 @@ auto Lexer::consume() -> char {
 auto Lexer::convertIdentifier() -> TokenType { return {}; }
 
 auto Lexer::addToken(TokenType type, LiteralVariant value) -> void {
-  auto lexeme = file_.substr(token_start_, pos_ - token_start_ + 1);
-  Token tok = {.Lexeme = lexeme, .Line = line_, .Value = value, .Type = type};
+  auto lexeme = file_.substr(token_start_, pos_ - token_start_);
+  auto tok =
+      Token{.Lexeme = lexeme, .Line = line_, .Value = value, .Type = type};
   tokens_.push_back(tok);
 }
 
@@ -100,12 +143,22 @@ auto Lexer::addString() -> void {
     reportError("Unterminated string literal!", filename_, line_);
     return;
   } else {
-    auto lexeme = file_.substr(token_start_ + 1, pos_ - token_start_ - 2);
-    addToken(TokenType::STRING_LITERAL, lexeme);
+    auto literal = file_.substr(token_start_ + 1, pos_ - token_start_ - 2);
+    addToken(TokenType::STRING_LITERAL, literal);
   }
 }
 
-auto Lexer::addIdentifierOrKeyword() -> void {}
+auto Lexer::addIdentifierOrKeyword(char ch) -> void {
+  while (pos_ < file_.size() && isalnum(peek()) && !isspace(peek())) {
+    consume();
+  }
+  auto lexeme = file_.substr(token_start_, pos_ - token_start_);
+  if (token_to_keyword_.contains(lexeme)) {
+    addToken(token_to_keyword_[lexeme]);
+    return;
+  }
+  addToken(TokenType::IDENTIFIER);
+}
 
 auto Lexer::addNumber() -> void {}
 
@@ -113,4 +166,11 @@ auto Lexer::removeComment() -> void {
   while (pos_ < file_.size() && consume() != '\n') {
   }
   line_++;
+}
+
+auto Lexer::peek() -> char {
+  if (pos_ < file_.size()) {
+    return file_[pos_];
+  }
+  return '\0';
 }

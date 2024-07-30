@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.26)
 project(vortex-lang)
+Include(FetchContent)
+
+# import Catch2
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.4.0 # or a later release
+)
+FetchContent_MakeAvailable(Catch2)
 
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -16,3 +25,5 @@ set(VORTEX_SOURCES
 
 add_executable(${PROJECT_NAME} 
   ${VORTEX_SOURCES})
+# build tests
+

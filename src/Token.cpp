@@ -5,6 +5,9 @@ auto toString(TokenType type) -> std::string {
   std::stringstream ss;
   switch (type) {
   // Keywords
+  case TokenType::IDENTIFIER:
+    ss << "IDENTIFIER";
+    break;
   case TokenType::BOOL:
     ss << "BOOL";
     break;
@@ -38,21 +41,6 @@ auto toString(TokenType type) -> std::string {
   case TokenType::EXTERN:
     ss << "EXTERN";
     break;
-
-  // Data Types
-  case TokenType::BOOLEAN_LITERAL:
-    ss << "BOOLEAN_LITERAL";
-    break;
-  case TokenType::FLOAT_LITERAL:
-    ss << "FLOAT_LITERAL";
-    break;
-  case TokenType::STRING_LITERAL:
-    ss << "STRING_LITERAL";
-    break;
-  case TokenType::INTEGER_LITERAL:
-    ss << "INTEGER_LITERAL";
-    break;
-
   // Operators
   case TokenType::PLUS:
     ss << "PLUS";
@@ -84,13 +72,9 @@ auto toString(TokenType type) -> std::string {
   case TokenType::INEQUALITY:
     ss << "INEQUALITY";
     break;
-  case TokenType::ARROW:
-    ss << "ARROW";
-    break;
   case TokenType::DOT:
     ss << "DOT";
     break;
-
   // Symbols
   case TokenType::L_PAREN:
     ss << "L_PAREN";
@@ -116,31 +100,10 @@ auto toString(TokenType type) -> std::string {
   case TokenType::COMMA:
     ss << "COMMA";
     break;
-
-  // Control Flow
-  case TokenType::IF_CONTROL:
-    ss << "IF_CONTROL";
-    break;
-  case TokenType::FOR_CONTROL:
-    ss << "FOR_CONTROL";
-    break;
-  case TokenType::WHILE_CONTROL:
-    ss << "WHILE_CONTROL";
-    break;
-
   // Collection Types
   case TokenType::ARRAY:
     ss << "ARRAY";
     break;
-
-  // Class and Method Definitions
-  case TokenType::CLASS_DEF:
-    ss << "CLASS_DEF";
-    break;
-  case TokenType::METHOD:
-    ss << "METHOD";
-    break;
-
   // External Modules names
   case TokenType::EXTERN_MODULE:
     ss << "EXTERN_MODULE";
