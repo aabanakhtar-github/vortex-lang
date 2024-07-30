@@ -14,6 +14,9 @@ auto toString(TokenType type) -> std::string {
   case TokenType::FLOAT:
     ss << "FLOAT";
     break;
+  case TokenType::FLOAT_LITERAL:
+    ss << "FLOAT_LITERAL";
+    break;
   case TokenType::STRING:
     ss << "STRING";
     break;
@@ -121,4 +124,27 @@ auto toString(TokenType type) -> std::string {
     ss << "Bro, what?\n";
   }
   return ss.str();
+}
+
+auto prettyPrint(std::ostream &stream,
+                 const std::vector<Token> &tokens) -> void {
+  for (auto &tok : tokens) {
+    // print out the type
+    auto token_typename = toString(tok.Type);
+    stream << "[TYPE: " << token_typename << "]; ";
+    auto token_index = tok.Value.index();
+    // print out the literal value
+    switch (LiteralVariantIndex{token_index}) {
+    case LiteralVariantIndex::NONE:
+      stream << "[Value: None]; ";
+      break;
+    case LiteralVariantIndex::DOUBLE:
+      stream << "[Value: " << std::get<double>(tok.Value) << "]; ";
+      break;
+    case LiteralVariantIndex::STRING:
+      stream << "[Value: " << std::get<std::string>(tok.Value) << "]; ";
+      break;
+    }
+    stream << "[LINE: " << tok.Line << "]; [Lexeme: {" << tok.Lexeme << "}];\n";
+  }
 }

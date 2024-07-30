@@ -3,6 +3,7 @@
 #include "Util.h"
 #include <string>
 #include <variant>
+#include <vector>
 
 enum class TokenType {
   // Keywords
@@ -34,6 +35,7 @@ enum class TokenType {
   GREATER_THAN,          // >
   GREATER_THAN_OR_EQUAL, // >=
   LESS_THAN_OR_EQUAL,    // <=
+  THICK_ARROW,           // =>
   ASSIGNMENT,            // ->
   EQUALITY,              // =
   INEQUALITY,            // !=
@@ -60,7 +62,8 @@ enum class TokenType {
   INVALID
 };
 
-using LiteralVariant = std::variant<None, std::string>;
+enum class LiteralVariantIndex : std::size_t { NONE = 0, STRING, DOUBLE };
+using LiteralVariant = std::variant<None, std::string, double>;
 
 struct Token {
   std::string Lexeme;
@@ -70,5 +73,7 @@ struct Token {
 };
 
 auto toString(TokenType type) -> std::string;
+auto prettyPrint(std::ostream &stream,
+                 const std::vector<Token> &tokens) -> void;
 
 #endif // !TOKEN_H

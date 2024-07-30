@@ -21,6 +21,11 @@ auto Lexer::lex() -> void {
     case '#':
       removeComment();
       break;
+    case '{':
+      addToken(TokenType::L_BRACE);
+      break;
+    case '}':
+      addToken(TokenType::R_BRACE);
     case '(':
       addToken(TokenType::L_PAREN);
       break;
@@ -46,6 +51,11 @@ auto Lexer::lex() -> void {
       addToken(TokenType::SEMICOLON);
       break;
     case '=':
+      if (peek() == '>') {
+        consume();
+        addToken(TokenType::THICK_ARROW);
+        break;
+      }
       addToken(TokenType::EQUALITY);
       break;
     case '"':
@@ -105,6 +115,9 @@ auto Lexer::lex() -> void {
       if (isalpha(ch)) {
         addIdentifierOrKeyword(ch);
         break;
+      } else if (isalnum(ch)) {
+        addNumber();
+        break;
       }
       reportError(std::format("Unexpected token '{}'!", ch), filename_, line_);
       addToken(TokenType::INVALID);
@@ -149,18 +162,37 @@ auto Lexer::addString() -> void {
 }
 
 auto Lexer::addIdentifierOrKeyword(char ch) -> void {
-  while (pos_ < file_.size() && isalnum(peek()) && !isspace(peek())) {
+  while (pos_ < file_.size() && isalnum(peek())) {
     consume();
   }
-  auto lexeme = file_.substr(token_start_, pos_ - token_start_);
-  if (token_to_keyword_.contains(lexeme)) {
-    addToken(token_to_keyword_[lexeme]);
+  auto word = file_.substr(token_start_, pos_ - token_start_);
+  if (token_to_keyword_.contains(word)) {
+    addToken(token_to_keyword_[word]);
     return;
   }
   addToken(TokenType::IDENTIFIER);
 }
 
-auto Lexer::addNumber() -> void {}
+auto Lexer::addNumber() -> void {
+  while (pos_ < file_.size() && isdigit(peek())) {
+    consume();
+  }
+  if (peek() == '.') {
+    consume();
+    if (!isdigit(peek())) {
+      reportError("Expected digits after '.' in floating point literal!",
+                  filename_, line_);
+      addToken(TokenType::INVALID);
+      return;
+    }
+    while (pos_ < file_.size() && isdigit(peek())) {
+      consume();
+    }
+  }
+  auto numstr = file_.substr(token_start_, pos_ - token_start_);
+  auto value = std::stod(numstr);
+  addToken(TokenType::FLOAT_LITERAL, value);
+}
 
 auto Lexer::removeComment() -> void {
   while (pos_ < file_.size() && consume() != '\n') {
