@@ -119,9 +119,14 @@ auto toString(TokenType type) -> std::string {
   case TokenType::INVALID:
     ss << "INVALID";
     break;
-
+  case TokenType::THICK_ARROW:
+    ss << "THICK_ARROW";
+    break;
+  case TokenType::NIL:
+    ss << "NIL";
+    break;
   default:
-    ss << "Bro, what?\n";
+    ss << "Bro, what?";
   }
   return ss.str();
 }

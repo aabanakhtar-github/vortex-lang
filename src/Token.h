@@ -18,7 +18,7 @@ enum class TokenType {
   CLASS,
   SUPER,
   EXTERN,
-
+  NIL, // nothing
   // Data Types
   TRUE,
   FALSE,          // boolean literals e.g true false
@@ -63,7 +63,7 @@ enum class TokenType {
 };
 
 enum class LiteralVariantIndex : std::size_t { NONE = 0, STRING, DOUBLE };
-using LiteralVariant = std::variant<None, std::string, double>;
+using LiteralVariant = std::variant<None, std::string, double, bool>;
 
 struct Token {
   std::string Lexeme;
