@@ -28,6 +28,8 @@ enum class TokenType {
   // Operators
   PLUS,                  // +
   MINUS,                 // -
+  MUL,                   // *
+  DIV,                   // /
   AND,                   // &&
   OR,                    // ||
   NOT,                   // !

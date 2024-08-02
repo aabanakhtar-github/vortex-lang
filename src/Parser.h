@@ -3,23 +3,25 @@
 
 #include "AST.h"
 #include "Token.h"
-#include <memory>
 
 // AST generation device
 class Parser {
-  using ExpressionPtr = std::unique_ptr<Expression>;
-  Parser(std::vector<Token> &tokens_);
+public:
+  explicit Parser(std::string_view filename, const std::vector<Token> &tokens);
 
-  auto parse() -> Program *;
+  auto parse() -> Expression *;
 
 private:
-  // NOTE: precedence is from least to highest
+  auto consume() -> Token;
+  auto peek() -> Token;
+  auto expect(TokenType type, std::string_view error) -> bool;
 
+  // NOTE: precedence is from least to highest
   auto parseExpression() -> ExpressionPtr;
   //  TODO: auto parseAssignment() -> ExpressionPtr;
   //  TODO: auto parseLogical() -> ExpressionPtr {};
   auto parseEquality() -> ExpressionPtr;
-  auto parseRelational() -> ExpressionPtr;
+  auto parseRelational() -> ExpressionPtr; // note: <=
   auto parseTerm() -> ExpressionPtr;
   auto parseFactor() -> ExpressionPtr;
   auto parseUnary() -> ExpressionPtr;
@@ -29,8 +31,9 @@ private:
 
 private:
   std::size_t pos_ = 0;
-  std::vector<Token> &tokens_;
-  std::unique_ptr<Program> result_;
+  std::string filename_;
+  const std::vector<Token> &tokens_;
+  std::unique_ptr<Expression> result_;
   bool is_panic_;
 };
 

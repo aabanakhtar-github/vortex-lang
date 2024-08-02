@@ -1,20 +1,21 @@
 #include "Lexer.h"
-#include "Token.h"
-#include <fstream>
+#include "Parser.h"
+#include <ios>
 #include <iostream>
 
 auto main(int argc, char *argv[]) -> int {
-  auto files = std::string{};
+  auto program = std::ifstream("main.vrtx", std::ios_base::in);
+  auto program_str = std::string{};
   auto s = std::string{};
-  auto file = std::ifstream{"main.vrtx"};
-  while (std::getline(file, s)) {
-    files += s + '\n';
+  while (std::getline(program, s)) {
+    program_str += s + '\n';
   }
-  std::cout << files << std::endl;
-  auto lex = Lexer{files, "main.vrtx"};
-  lex.lex();
-  auto x = lex.getTokens();
-  prettyPrint(std::cout, x);
-  std::cin.get();
+  auto file = std::ofstream{"lexer_output.txt", std::ios_base::out};
+  auto lexer = Lexer{program_str, "main.vrtx", &file};
+  lexer.lex();
+  auto parser = Parser{lexer.getTokens()};
+  parser.parse();
+  program.close();
+  file.close();
   return 0;
 }

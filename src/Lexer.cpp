@@ -41,6 +41,12 @@ auto Lexer::lex() -> void {
     case '+':
       addToken(TokenType::PLUS);
       break;
+    case '*':
+      addToken(TokenType::MUL);
+      break;
+    case '/':
+      addToken(TokenType::DIV);
+      break;
     case '.':
       addToken(TokenType::DOT);
       break;
@@ -127,11 +133,23 @@ auto Lexer::lex() -> void {
     token_start_ = pos_;
   }
   addToken(TokenType::END_OF_FILE);
+
+  // log all the tokens for debug purposes
+  if (debug_file_ != nullptr) {
+    prettyPrint(*debug_file_, tokens_);
+  }
 }
 
 auto Lexer::consume() -> char {
-  pos_++;
+  ++pos_;
   return file_[pos_ - 1];
+}
+
+auto Lexer::peek() -> char {
+  if (pos_ < file_.size()) {
+    return file_[pos_];
+  }
+  return '\0';
 }
 
 auto Lexer::convertIdentifier() -> TokenType { return {}; }
@@ -198,11 +216,4 @@ auto Lexer::removeComment() -> void {
   while (pos_ < file_.size() && consume() != '\n') {
   }
   line_++;
-}
-
-auto Lexer::peek() -> char {
-  if (pos_ < file_.size()) {
-    return file_[pos_];
-  }
-  return '\0';
 }

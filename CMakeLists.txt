@@ -10,7 +10,8 @@ set(VORTEX_SOURCES
   src/main.cpp
   src/Token.cpp 
   src/Lexer.cpp 
-  src/Error.cpp 
+  src/Error.cpp
+  src/Parser.cpp
 )
 
 add_executable(${PROJECT_NAME} 

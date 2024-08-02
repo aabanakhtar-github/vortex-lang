@@ -1,0 +1,47 @@
+#include "Parser.h"
+#include "AST.h"
+#include "Error.h"
+#include <iostream>
+
+Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
+    : filename_{filename}, tokens_{tokens} {}
+
+auto Parser::parse() -> Expression * {
+  while (pos_ < tokens_.size() &&
+         tokens_[pos_].Type != TokenType::END_OF_FILE) {
+    std::cout << toString(tokens_[pos_].Type) << std::endl;
+    pos_++;
+  }
+
+  return nullptr;
+}
+
+auto Parser::expect(TokenType type, std::string_view error) -> bool {
+  const auto &curr_token = tokens_[pos_];
+  if (curr_token.Type != type) {
+    reportError(error, filename_, curr_token.Line);
+    return false;
+  }
+  return true;
+}
+
+auto Parser::advance() -> Token {
+  ++pos_;
+  return tokens_[pos_];
+}
+
+auto Parser::peek() -> Token { return tokens_[pos_]; }
+
+auto Parser::parseExpression() -> ExpressionPtr { return {}; }
+
+auto Parser::parseEquality() -> ExpressionPtr { return {}; }
+
+auto Parser::parseRelational() -> ExpressionPtr { return {}; }
+
+auto Parser::parseTerm() -> ExpressionPtr { return {}; }
+
+auto Parser::parseFactor() -> ExpressionPtr { return {}; }
+
+auto Parser::parseUnary() -> ExpressionPtr { return {}; }
+
+auto Parser::parsePrimary() -> ExpressionPtr { return {}; }
