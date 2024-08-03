@@ -9,7 +9,7 @@ class Parser {
 public:
   explicit Parser(std::string_view filename, const std::vector<Token> &tokens);
 
-  auto parse() -> Expression *;
+  auto parse() -> std::vector<ExpressionPtr> &;
 
 private:
   auto consume() -> Token;
@@ -33,7 +33,7 @@ private:
   std::size_t pos_ = 0;
   std::string filename_;
   const std::vector<Token> &tokens_;
-  std::unique_ptr<Expression> result_;
+  std::vector<std::unique_ptr<Expression>> result_;
   bool is_panic_;
 };
 

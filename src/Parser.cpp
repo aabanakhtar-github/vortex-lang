@@ -4,19 +4,17 @@
 #include "Token.h"
 #include <algorithm>
 #include <array>
+#include <format>
 #include <iostream>
 
 Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
     : filename_{filename}, tokens_{tokens} {}
 
-auto Parser::parse() -> Expression * {
-  while (pos_ < tokens_.size() &&
-         tokens_[pos_].Type != TokenType::END_OF_FILE) {
-    std::cout << toString(tokens_[pos_].Type) << std::endl;
-    pos_++;
+auto Parser::parse() -> std::vector<ExpressionPtr> & {
+  while (pos_ < tokens_.size() - 1) {
+    result_.push_back(parseExpression());
   }
-
-  return nullptr;
+  return result_;
 }
 
 auto Parser::expect(TokenType type, std::string_view error) -> bool {
@@ -50,8 +48,8 @@ auto Parser::parseEquality() -> ExpressionPtr {
          peek().Type == TokenType::INEQUALITY) {
     auto op = consume().Type; // get that juicy operator
     // take in the right side of the operation
-    this_node = std::make_unique<BinaryOperation>(op, std::move(this_node),
-                                                  parseEquality());
+    this_node =
+        std::make_unique<BinaryOperation>(op, this_node, parseEquality());
   }
   // !NOTE: unique_ptr safely casts to base types with a converting constructor
   return this_node;
@@ -69,8 +67,7 @@ auto Parser::parseRelational() -> ExpressionPtr {
                    peek().Type) != relational_token_types.end()) {
     auto op = consume().Type; // juicy...
     // get the right side
-    this_node = std::make_unique<BinaryOperation>(op, std::move(this_node),
-                                                  parseTerm());
+    this_node = std::make_unique<BinaryOperation>(op, this_node, parseTerm());
   }
   return this_node;
 }
@@ -80,8 +77,7 @@ auto Parser::parseTerm() -> ExpressionPtr {
   while (pos_ < tokens_.size() &&
          (peek().Type == TokenType::PLUS || peek().Type == TokenType::MINUS)) {
     auto op = consume().Type;
-    this_node = std::make_unique<BinaryOperation>(op, std::move(this_node),
-                                                  parseFactor());
+    this_node = std::make_unique<BinaryOperation>(op, this_node, parseFactor());
   }
   return this_node;
 }
@@ -91,8 +87,7 @@ auto Parser::parseFactor() -> ExpressionPtr {
   while (pos_ < tokens_.size() &&
          (peek().Type == TokenType::MUL || peek().Type == TokenType::DIV)) {
     auto op = consume().Type;
-    this_node = std::make_unique<BinaryOperation>(op, std::move(this_node),
-                                                  parseUnary());
+    this_node = std::make_unique<BinaryOperation>(op, this_node, parseUnary());
   }
   return this_node;
 }
@@ -108,6 +103,12 @@ auto Parser::parseUnary() -> ExpressionPtr {
 auto Parser::parsePrimary() -> ExpressionPtr {
   switch (peek().Type) {
   default:
+    // reason for consume: get rid of this silliness, so we don't deal with it
+    // later
+    reportError(
+        std::format("Expected a valid expression, got '{}'!", peek().Lexeme),
+        filename_, consume().Line);
+    return std::make_unique<InvalidExpression>();
   case TokenType::STRING_LITERAL: {
     const auto &tok = consume();
     return std::make_unique<Literal>(tok.Value);
@@ -131,12 +132,9 @@ auto Parser::parsePrimary() -> ExpressionPtr {
   case TokenType::L_PAREN: // handle grouping
     consume();
     auto expr = parseExpression();
-    if (expect(TokenType::R_PAREN,
-               "Expected ')' after '(' in grouping expression!")) {
+    if (expect(TokenType::R_PAREN, "Invalid Grouping expression!")) {
       consume();
     }
     return std::make_unique<Grouping>(std::move(expr));
   }
-
-  return {};
 }

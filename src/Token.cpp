@@ -57,6 +57,12 @@ auto toString(TokenType type) -> std::string {
   case TokenType::OR:
     ss << "OR";
     break;
+  case TokenType::MUL:
+    ss << "MUL";
+    break;
+  case TokenType::DIV:
+    ss << "DIV";
+    break;
   case TokenType::NOT:
     ss << "NOT";
     break;
@@ -148,6 +154,10 @@ auto prettyPrint(std::ostream &stream,
       break;
     case LiteralVariantIndex::STRING:
       stream << "[Value: " << std::get<std::string>(tok.Value) << "]; ";
+      break;
+    case LiteralVariantIndex::BOOL:
+      stream << "[Value: " << std::boolalpha << std::get<bool>(tok.Value)
+             << "]; ";
       break;
     }
     stream << "[LINE: " << tok.Line << "]; [Lexeme: {" << tok.Lexeme << "}];\n";
