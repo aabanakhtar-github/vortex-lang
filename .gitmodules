@@ -1,0 +1,3 @@
+[submodule "vvm"]
+	path = vvm
+	url = https://github.com/aabanakhtar-github/vvm.git
