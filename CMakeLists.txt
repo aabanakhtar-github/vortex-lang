@@ -14,6 +14,8 @@ set(VORTEX_SOURCES
   src/Lexer.cpp 
   src/Error.cpp
   src/Parser.cpp
+  src/PrettyPrintExpressionVisitor.cpp
+  src/CodeGenVisitor.cpp
 )
 add_executable(${PROJECT_NAME} 
   ${VORTEX_SOURCES})

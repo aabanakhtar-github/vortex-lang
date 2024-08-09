@@ -31,6 +31,7 @@ public:
 struct ASTNode {};
 
 struct Expression {
+  std::size_t Line;
   // base for all kinds of expressions
   virtual auto acceptVisitor(class NodeVisitor *visitor) -> void {
     visitor->visit(this);

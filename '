@@ -12,11 +12,12 @@ auto CodeGenVisitor::visit(Expression *node) -> void {}
 
 auto CodeGenVisitor::visit(BinaryOperation *node) -> void {
   node->Left->acceptVisitor(
+      this); // generate the code for the left side and push it on
+  node->Right->acceptVisitor(
       this); // generate the code for the right side and push it on
-  node->Right->acceptVisitor(this);
   switch (node->Operator) {
   case TokenType::PLUS:
-    program_.pushCode(ADD, node->Line);
+    program_.pushCode(ADD, 0);
     break;
   case TokenType::MINUS:
     program_.pushCode(SUB, node->Line);
@@ -50,29 +51,9 @@ auto CodeGenVisitor::visit(UnaryOperation *node) -> void {
   }
 }
 
-auto CodeGenVisitor::visit(Grouping *node) -> void {
-  node->Expr->acceptVisitor(this);
-}
+auto CodeGenVisitor::visit(Grouping *node) -> void {}
 
-auto CodeGenVisitor::visit(Literal *node) -> void {
-  switch (LiteralVariantIndex{node->Value.index()}) {
-  default:
-    reportError("Literal variant of unknown type!", "", node->Line);
-    break;
-  case LiteralVariantIndex::DOUBLE:
-    VortexValue val = {.Type = ValueType::DOUBLE,
-                       .Value = {std::get<double>(node->Value)}};
-    auto index = program_.addConstant(val);
-    // ran out of space for all the constants
-    // TODO: use 24 bit numbers
-    if (index == -1) {
-      reportError("Could not allocate constant! Use more variables!");
-    }
-    program_.pushCode(PUSHC, node->Line);
-    program_.pushCode(index, node->Line);
-    break;
-  }
-}
+auto CodeGenVisitor::visit(Literal *node) -> void {}
 
 auto CodeGenVisitor::visit(InvalidExpression *node) -> void {}
 

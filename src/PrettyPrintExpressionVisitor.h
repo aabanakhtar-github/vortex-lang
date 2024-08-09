@@ -2,8 +2,6 @@
 #define AST_EXPRESSION_PRINTER_H
 
 #include "AST.h"
-#include "Token.h"
-#include <iostream>
 
 class PrettyPrintExpressionVisitor : public NodeVisitor {
 public:

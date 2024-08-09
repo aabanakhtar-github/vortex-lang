@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <format>
-#include <iostream>
+#include <memory>
 
 Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
     : filename_{filename}, tokens_{tokens} {}
@@ -45,11 +45,13 @@ auto Parser::parseEquality() -> ExpressionPtr {
   auto this_node = parseRelational();
 
   while (pos_ < tokens_.size() && (peek().Type == TokenType::EQUALITY) ||
-         peek().Type == TokenType::INEQUALITY) {
-    auto op = consume().Type; // get that juicy operator
+         (peek().Type == TokenType::INEQUALITY)) {
+    const auto &this_tok = consume();
+    auto op = this_tok.Type; // get that juicy operator
     // take in the right side of the operation
     this_node =
         std::make_unique<BinaryOperation>(op, this_node, parseEquality());
+    this_node->Line = this_tok.Line;
   }
   // !NOTE: unique_ptr safely casts to base types with a converting constructor
   return this_node;
@@ -65,76 +67,113 @@ auto Parser::parseRelational() -> ExpressionPtr {
   while (pos_ < tokens_.size() &&
          std::find(relational_token_types.begin(), relational_token_types.end(),
                    peek().Type) != relational_token_types.end()) {
-    auto op = consume().Type; // juicy...
+    const auto &this_tok = consume();
+    auto op = this_tok.Type; // juicy...
     // get the right side
     this_node = std::make_unique<BinaryOperation>(op, this_node, parseTerm());
+    this_node->Line = this_tok.Line;
   }
   return this_node;
 }
 
 auto Parser::parseTerm() -> ExpressionPtr {
+  // get the left side
   auto this_node = parseFactor();
+  // parse the other terms
   while (pos_ < tokens_.size() &&
          (peek().Type == TokenType::PLUS || peek().Type == TokenType::MINUS)) {
-    auto op = consume().Type;
+    const auto &this_tok = consume();
+    auto op = this_tok.Type;
+    // handle the right hand side
     this_node = std::make_unique<BinaryOperation>(op, this_node, parseFactor());
+    this_node->Line = this_tok.Line;
   }
   return this_node;
 }
 
 auto Parser::parseFactor() -> ExpressionPtr {
-  auto this_node = parseUnary();
+  auto this_node = parseUnary(); // parse left
+  // parse the other factors
   while (pos_ < tokens_.size() &&
          (peek().Type == TokenType::MUL || peek().Type == TokenType::DIV)) {
-    auto op = consume().Type;
+    const auto &this_tok = consume();
+    auto op = this_tok.Type;
+    // handle the right hand side
     this_node = std::make_unique<BinaryOperation>(op, this_node, parseUnary());
+    this_node->Line = this_tok.Line;
   }
   return this_node;
 }
 
 auto Parser::parseUnary() -> ExpressionPtr {
+  // expect there to be a prefixed ! or - operator
   if (peek().Type == TokenType::MINUS || peek().Type == TokenType::NOT) {
-    auto op = consume().Type;
-    return std::make_unique<UnaryOperation>(op, parsePrimary());
+    const auto &this_tok = consume();
+    auto op = this_tok.Type;
+    // handle the operand
+    auto this_node = std::make_unique<UnaryOperation>(op, parsePrimary());
+    this_node->Line = this_tok.Line;
+    return this_node;
   }
+  // otherwise its a literal or grouping
   return parsePrimary();
 }
 
 auto Parser::parsePrimary() -> ExpressionPtr {
   switch (peek().Type) {
-  default:
-    // reason for consume: get rid of this silliness, so we don't deal with it
-    // later
+  default: {
+    // TODO: error handling later
     reportError(
         std::format("Expected a valid expression, got '{}'!", peek().Lexeme),
-        filename_, consume().Line);
-    return std::make_unique<InvalidExpression>();
+        filename_, peek().Line);
+    auto error_node = std::make_unique<InvalidExpression>();
+    error_node->Line =
+        consume().Line; // we consume to get rid of the offending character
+    return error_node;
+  }
   case TokenType::STRING_LITERAL: {
-    const auto &tok = consume();
-    return std::make_unique<Literal>(tok.Value);
+    const auto &this_tok = consume();
+    auto this_node = std::make_unique<Literal>(this_tok.Value);
+    this_node->Line = this_tok.Line;
+    return this_node;
   }
   case TokenType::FLOAT_LITERAL: {
-    const auto &tok = consume();
-    return std::make_unique<Literal>(tok.Value);
+    const auto &this_tok = consume();
+    auto this_node = std::make_unique<Literal>(this_tok.Value);
+    this_node->Line = this_tok.Line;
+    return this_node;
   }
   case TokenType::TRUE: {
-    consume();
-    return std::make_unique<Literal>(true);
+    auto line = consume().Line;
+    auto this_node = std::make_unique<Literal>(true);
+    this_node->Line = line;
+    return this_node;
   }
   case TokenType::FALSE: {
-    consume();
-    return std::make_unique<Literal>(false);
+    auto line = consume().Line;
+    auto this_node = std::make_unique<Literal>(false);
+    this_node->Line = line;
+    return this_node;
   }
   case TokenType::NIL: {
-    consume();
-    return std::make_unique<Literal>(None{});
+    auto line = consume().Line;
+    auto this_node = std::make_unique<Literal>(None{});
+    this_node->Line = line;
+    return this_node;
   }
   case TokenType::L_PAREN: // handle grouping
-    consume();
+    auto line = consume().Line;
     auto expr = parseExpression();
+    // expect a right parenthesis
     if (expect(TokenType::R_PAREN, "Invalid Grouping expression!")) {
-      consume();
+      consume(); // get rid of the right parenthesis
+      auto this_node = std::make_unique<Grouping>(std::move(expr));
+      this_node->Line = line;
+      return this_node;
     }
-    return std::make_unique<Grouping>(std::move(expr));
+    consume(); // get rid of offending token.
+    auto error_node = std::make_unique<InvalidExpression>();
+    error_node->Line = line;
+    return error_node;
   }
 }
