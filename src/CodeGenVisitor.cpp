@@ -4,8 +4,6 @@
 #include "Token.h"
 #include "VortexTypes.h"
 
-// TODO: add line numbers
-
 CodeGenVisitor::CodeGenVisitor(Program &program) : program_{program} {}
 
 auto CodeGenVisitor::visit(Expression *node) -> void {}
@@ -69,7 +67,13 @@ auto CodeGenVisitor::visit(Literal *node) -> void {
       reportError("Could not allocate constant! Use more variables!");
     }
     program_.pushCode(PUSHC, node->Line);
-    program_.pushCode(index, node->Line);
+    // 3 byte index operand
+    auto b1 = static_cast<std::uint8_t>(index >> 16);
+    auto b2 = static_cast<std::uint8_t>(index >> 8);
+    auto b3 = static_cast<std::uint8_t>(index);
+    program_.pushCode(b1, node->Line);
+    program_.pushCode(b2, node->Line);
+    program_.pushCode(b3, node->Line);
     break;
   }
 }
