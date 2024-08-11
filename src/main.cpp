@@ -8,6 +8,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+
 auto main(int argc, char *argv[]) -> int {
   auto program =
       std::ifstream("test_programs/expression_test.vrtx", std::ios_base::in);

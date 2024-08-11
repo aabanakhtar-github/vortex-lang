@@ -1,6 +1,0 @@
-[TYPE: L_PAREN]; [Value: None]; [LINE: 1]; [Lexeme: {(}];
-[TYPE: FLOAT_LITERAL]; [Value: 1]; [LINE: 1]; [Lexeme: {1}];
-[TYPE: PLUS]; [Value: None]; [LINE: 1]; [Lexeme: {+}];
-[TYPE: FLOAT_LITERAL]; [Value: 2]; [LINE: 1]; [Lexeme: {2}];
-[TYPE: R_PAREN]; [Value: None]; [LINE: 1]; [Lexeme: {)}];
-[TYPE: END_OF_FILE]; [Value: None]; [LINE: 2]; [Lexeme: {}];
