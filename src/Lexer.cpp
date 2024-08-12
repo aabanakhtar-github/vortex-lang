@@ -118,10 +118,10 @@ auto Lexer::lex() -> void {
       addToken(TokenType::OR);
       break;
     default:
-      if (isalpha(ch)) {
+      if (isalpha(ch) || ch == '_') {
         addIdentifierOrKeyword(ch);
         break;
-      } else if (isalnum(ch)) {
+      } else if (isdigit(ch)) {
         addNumber();
         break;
       }
@@ -180,7 +180,7 @@ auto Lexer::addString() -> void {
 }
 
 auto Lexer::addIdentifierOrKeyword(char ch) -> void {
-  while (pos_ < file_.size() && isalnum(peek())) {
+  while (pos_ < file_.size() && (isalnum(peek()) || peek() == '_')) {
     consume();
   }
   auto word = file_.substr(token_start_, pos_ - token_start_);
