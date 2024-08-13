@@ -25,11 +25,24 @@ auto CodeGenVisitor::visit(BinaryOperation *node) -> void {
   case TokenType::DIV:
     program_.pushCode(DIV, node->Line);
     break;
-  case TokenType::NOT:
-    program_.pushCode(NEGATE, node->Line);
+  case TokenType::EQUALITY:
+    program_.pushCode(EQ, node->Line);
+    break;
+  case TokenType::LESS_THAN_OR_EQUAL:
+    program_.pushCode(LESS_EQ, node->Line);
+    break;
+  case TokenType::GREATER_THAN_OR_EQUAL:
+    program_.pushCode(GREATER_EQ, node->Line);
+    break;
+  case TokenType::LESS_THAN:
+    program_.pushCode(LESS, node->Line);
+    break;
+  case TokenType::GREATER_THAN:
+    program_.pushCode(GREATER, node->Line);
     break;
   default:
-    // TODO: fill in filename for error
+    // TODO: fill in filename for error and push an invalid operator to crash
+    // the interpeter
     reportError("Parser generated unexpected op for binary node.", "",
                 node->Line);
     break;
@@ -40,6 +53,9 @@ auto CodeGenVisitor::visit(UnaryOperation *node) -> void {
   switch (node->Operator) {
   case TokenType::MINUS:
     program_.pushCode(NEGATE, node->Line);
+    break;
+  case TokenType::NOT:
+    program_.pushCode(NOT, node->Line);
     break;
   default:
     reportError("Parser generated unexpected op for unary node.", "",
