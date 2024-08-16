@@ -26,19 +26,18 @@ auto PrettyPrintExpressionVisitor::visit(Grouping *node) -> void {
 }
 
 auto PrettyPrintExpressionVisitor::visit(Literal *node) -> void {
-  switch (LiteralVariantIndex{node->Value.index()}) {
-  case LiteralVariantIndex::NONE:
-    std::cout << "NIL";
-    break;
-  case LiteralVariantIndex::BOOL:
+  switch (LiteralVariantType{node->Value.index()}) {
+  case LiteralVariantType::BOOL:
     std::cout << ((std::get<bool>(node->Value)) ? "true" : "false");
     break;
-  case LiteralVariantIndex::STRING:
+  case LiteralVariantType::STRING:
     std::cout << std::get<std::string>(node->Value);
     break;
-  case LiteralVariantIndex::DOUBLE:
+  case LiteralVariantType::DOUBLE:
     std::cout << std::get<double>(node->Value);
     break;
+  case LiteralVariantType::NIL:
+    std::cout << "NIL";
   }
 }
 

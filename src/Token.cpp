@@ -145,17 +145,17 @@ auto prettyPrint(std::ostream &stream,
     stream << "[TYPE: " << token_typename << "]; ";
     auto token_index = tok.Value.index();
     // print out the literal value
-    switch (LiteralVariantIndex{token_index}) {
-    case LiteralVariantIndex::NONE:
-      stream << "[Value: None]; ";
+    switch (LiteralVariantType{token_index}) {
+    case LiteralVariantType::NIL:
+      stream << "[Value: NIL]; ";
       break;
-    case LiteralVariantIndex::DOUBLE:
+    case LiteralVariantType::DOUBLE:
       stream << "[Value: " << std::get<double>(tok.Value) << "]; ";
       break;
-    case LiteralVariantIndex::STRING:
+    case LiteralVariantType::STRING:
       stream << "[Value: " << std::get<std::string>(tok.Value) << "]; ";
       break;
-    case LiteralVariantIndex::BOOL:
+    case LiteralVariantType::BOOL:
       stream << "[Value: " << std::boolalpha << std::get<bool>(tok.Value)
              << "]; ";
       break;

@@ -64,8 +64,11 @@ enum class TokenType {
   INVALID
 };
 
-enum class LiteralVariantIndex : std::size_t { NONE = 0, STRING, DOUBLE, BOOL };
+enum class LiteralVariantType : std::size_t { NIL = 0, STRING, DOUBLE, BOOL };
+
 using LiteralVariant = std::variant<None, std::string, double, bool>;
+// changed my mind but don't wanna break code.
+using Nil = None;
 
 struct Token {
   std::string Lexeme;

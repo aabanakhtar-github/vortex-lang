@@ -3,6 +3,7 @@
 #include "Program.h"
 #include "Token.h"
 #include "VortexTypes.h"
+#include <tuple>
 
 CodeGenVisitor::CodeGenVisitor(Program &program) : program_{program} {}
 
@@ -69,28 +70,66 @@ auto CodeGenVisitor::visit(Grouping *node) -> void {
 }
 
 auto CodeGenVisitor::visit(Literal *node) -> void {
-  switch (LiteralVariantIndex{node->Value.index()}) {
-  default:
-    reportError("Literal variant of unknown type!", "", node->Line);
-    break;
-  case LiteralVariantIndex::DOUBLE:
+  // returns a tuple of 3 bytes that contain the individual indices from 0, 1,
+  // and then finally 2
+  auto size_to_24_bit = [](std::size_t i)
+      -> std::tuple<std::uint8_t, std::uint8_t, std::uint8_t> {
+    auto b1 = static_cast<std::uint8_t>(i >> 16);
+    auto b2 = static_cast<std::uint8_t>(i >> 8);
+    auto b3 = static_cast<std::uint8_t>(i);
+    return {b1, b2, b3};
+  };
+
+  switch (LiteralVariantType{node->Value.index()}) {
+  case LiteralVariantType::DOUBLE: {
     VortexValue val = {.Type = ValueType::DOUBLE,
                        .Value = {std::get<double>(node->Value)}};
     auto index = program_.addConstant(val);
     // ran out of space for all the constants
     // TODO: use 24 bit numbers
     if (index == -1) {
-      reportError("Could not allocate constant! Use more variables!");
+      reportError("Could not enough space for all program constants. Program "
+                  "is too large.");
     }
     program_.pushCode(PUSHC, node->Line);
     // 3 byte index operand
-    auto b1 = static_cast<std::uint8_t>(index >> 16);
-    auto b2 = static_cast<std::uint8_t>(index >> 8);
-    auto b3 = static_cast<std::uint8_t>(index);
-    program_.pushCode(b1, node->Line);
-    program_.pushCode(b2, node->Line);
-    program_.pushCode(b3, node->Line);
+    auto indices = size_to_24_bit(index);
+    program_.pushCode(std::get<0>(indices), node->Line);
+    program_.pushCode(std::get<1>(indices), node->Line);
+    program_.pushCode(std::get<2>(indices), node->Line);
     break;
+  }
+  case LiteralVariantType::NIL: {
+    program_.pushCode(PUSH_NIL, node->Line);
+    break;
+  }
+  case LiteralVariantType::BOOL:
+    switch (static_cast<int>(std::get<bool>(node->Value))) {
+    case 1:
+      program_.pushCode(PUSH_TRUE, node->Line);
+      break;
+    case 0:
+      program_.pushCode(PUSH_FALSE, node->Line);
+    }
+    break;
+  case LiteralVariantType::STRING: {
+    // get the actual string
+    auto literal = std::get<std::string>(node->Value);
+    // get the pointer to the string as a generic (Object*)
+    auto ptr = program_.createString(literal);
+    // save this as a constant
+    auto val =
+        VortexValue{.Type = ValueType::OBJECT, .Value = {.AsObject = ptr}};
+    // add it to the constants table
+    auto index = program_.addConstant(val);
+    // convert the index to 24 bit
+    auto indicies = size_to_24_bit(index);
+    program_.pushCode(PUSHC, node->Line); // load
+    program_.pushCode(std::get<0>(indicies), node->Line);
+    program_.pushCode(std::get<1>(indicies), node->Line);
+    program_.pushCode(std::get<2>(indicies), node->Line);
+    break;
+  }
   }
 }
 

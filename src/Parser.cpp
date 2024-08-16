@@ -157,7 +157,7 @@ auto Parser::parsePrimary() -> ExpressionPtr {
   }
   case TokenType::NIL: {
     auto line = consume().Line;
-    auto this_node = std::make_unique<Literal>(None{});
+    auto this_node = std::make_unique<Literal>(Nil{});
     this_node->Line = line;
     return this_node;
   }
