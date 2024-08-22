@@ -96,4 +96,25 @@ struct InvalidExpression : Expression {
   }
 };
 
+// *STATEMENTS ARE INDIVIDUAL UNITS OF EXECUTION*
+struct Statement {};
+using StatementPtr = std::unique_ptr<Statement>;
+
+// representing statements that *SOMEONE* messed up
+struct InvalidStatement : Statement {};
+
+struct PrintStatement : Statement {
+  ExpressionPtr Expr;
+};
+
+struct GlobalDeclaration : Statement {
+  std::string Type;
+  std::string Name;
+  ExpressionPtr assignedValue;
+};
+
+struct Program {
+  std::vector<StatementPtr> statements;
+};
+
 #endif // !AST_H

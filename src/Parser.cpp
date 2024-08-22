@@ -10,12 +10,19 @@
 Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
     : filename_{filename}, tokens_{tokens} {}
 
-auto Parser::parse() -> std::vector<ExpressionPtr> & {
+auto Parser::parse() -> Program & {
+  // -1 is there for the EOF token
   while (pos_ < tokens_.size() - 1) {
-    result_.push_back(parseExpression());
+    result_.statements.push_back(std::move(parseStatement()));
+    if (is_panic_) {
+      handlePanic();
+    }
   }
+
   return result_;
 }
+
+auto Parser::handlePanic() -> void {}
 
 auto Parser::expect(TokenType type, std::string_view error) -> bool {
   const auto &curr_token = tokens_[pos_];
@@ -36,6 +43,15 @@ auto Parser::peek() -> Token {
     return tokens_[pos_];
   }
   return Token{.Type = TokenType::END_OF_FILE};
+}
+
+auto Parser::parseStatement() -> StatementPtr {
+  switch (peek().Type) {
+  default:
+    auto invalid_stmt = std::make_unique<InvalidStatement>();
+    is_panic_ = true;
+    return invalid_stmt;
+  }
 }
 
 auto Parser::parseExpression() -> ExpressionPtr { return parseEquality(); }
@@ -171,9 +187,15 @@ auto Parser::parsePrimary() -> ExpressionPtr {
       this_node->Line = line;
       return this_node;
     }
+    // so... if you forgot your parenthesis
     consume(); // get rid of offending token.
     auto error_node = std::make_unique<InvalidExpression>();
     error_node->Line = line;
+    is_panic_ = true;
     return error_node;
   }
 }
+
+auto Parser::parsePrint() -> StatementPtr { return {}; }
+
+auto Parser::parseGlobalDecl() -> StatementPtr { return {}; }

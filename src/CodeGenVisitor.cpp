@@ -105,10 +105,10 @@ auto CodeGenVisitor::visit(Literal *node) -> void {
   }
   case LiteralVariantType::BOOL:
     switch (static_cast<int>(std::get<bool>(node->Value))) {
-    case 1:
+    case true:
       program_.pushCode(PUSH_TRUE, node->Line);
       break;
-    case 0:
+    case false:
       program_.pushCode(PUSH_FALSE, node->Line);
     }
     break;
