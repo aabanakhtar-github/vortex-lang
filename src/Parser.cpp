@@ -10,7 +10,7 @@
 Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
     : filename_{filename}, tokens_{tokens} {}
 
-auto Parser::parse() -> Program & {
+auto Parser::parse() -> ProgramNode & {
   // -1 is there for the EOF token
   while (pos_ < tokens_.size() - 1) {
     result_.statements.push_back(std::move(parseStatement()));
@@ -22,7 +22,15 @@ auto Parser::parse() -> Program & {
   return result_;
 }
 
-auto Parser::handlePanic() -> void {}
+auto Parser::handlePanic() -> void {
+  while (peek().Type != TokenType::END_OF_FILE) {
+    switch (TokenType) {
+      // TODO: get syncing working I suppose
+    }
+
+    consume();
+  }
+}
 
 auto Parser::expect(TokenType type, std::string_view error) -> bool {
   const auto &curr_token = tokens_[pos_];
@@ -145,6 +153,7 @@ auto Parser::parsePrimary() -> ExpressionPtr {
     auto error_node = std::make_unique<InvalidExpression>();
     error_node->Line =
         consume().Line; // we consume to get rid of the offending character
+    is_panic_ = true;
     return error_node;
   }
   case TokenType::STRING_LITERAL: {
@@ -196,6 +205,21 @@ auto Parser::parsePrimary() -> ExpressionPtr {
   }
 }
 
-auto Parser::parsePrint() -> StatementPtr { return {}; }
+auto Parser::parsePrint() -> StatementPtr {
+  auto line = consume().Line; // PRINT Token
+  auto expr = parseExpression();
+  if (!expect(TokenType::SEMICOLON,
+              "[rookie mistake] Expected ';' after statement")) {
+    consume(); // the ;
+    auto print_node = std::make_unique<PrintStatement>(std::move(expr));
+    print_node->Line = line;
+    return print_node;
+  }
+  // bro forgot the semicolon
+  consume(); // get rid of offender
+  auto error_stmt = std::make_unique<InvalidStatement>();
+  error_stmt->Line = line;
+  return error_stmt;
+}
 
 auto Parser::parseGlobalDecl() -> StatementPtr { return {}; }

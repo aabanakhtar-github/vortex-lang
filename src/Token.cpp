@@ -131,6 +131,12 @@ auto toString(TokenType type) -> std::string {
   case TokenType::NIL:
     ss << "NIL";
     break;
+  case TokenType::FN:
+    ss << "FN";
+    break;
+  case TokenType::PRINT:
+    ss << "PRINT";
+    break;
   default:
     ss << "Bro, what?";
   }

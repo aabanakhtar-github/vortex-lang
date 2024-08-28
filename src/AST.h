@@ -97,7 +97,9 @@ struct InvalidExpression : Expression {
 };
 
 // *STATEMENTS ARE INDIVIDUAL UNITS OF EXECUTION*
-struct Statement {};
+struct Statement {
+  std::size_t Line;
+};
 using StatementPtr = std::unique_ptr<Statement>;
 
 // representing statements that *SOMEONE* messed up
@@ -105,6 +107,8 @@ struct InvalidStatement : Statement {};
 
 struct PrintStatement : Statement {
   ExpressionPtr Expr;
+
+  PrintStatement(ExpressionPtr &&expr) : Expr(std::move(expr)) {}
 };
 
 struct GlobalDeclaration : Statement {
@@ -113,7 +117,7 @@ struct GlobalDeclaration : Statement {
   ExpressionPtr assignedValue;
 };
 
-struct Program {
+struct ProgramNode {
   std::vector<StatementPtr> statements;
 };
 

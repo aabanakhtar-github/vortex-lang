@@ -9,7 +9,7 @@ class Parser {
 public:
   explicit Parser(std::string_view filename, const std::vector<Token> &tokens);
 
-  auto parse() -> Program &;
+  auto parse() -> ProgramNode &;
 
 private:
   auto consume() -> Token;
@@ -41,7 +41,7 @@ private:
   bool is_panic_ = false;
   std::string filename_;
   const std::vector<Token> &tokens_;
-  Program result_;
+  ProgramNode result_;
 };
 
 #endif // !PARSER_H

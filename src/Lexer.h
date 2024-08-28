@@ -50,7 +50,8 @@ private:
       {"class", TokenType::CLASS},   {"super", TokenType::SUPER},
       {"extern", TokenType::EXTERN}, {"true", TokenType::TRUE},
       {"false", TokenType::FALSE},   {"Array", TokenType::ARRAY},
-      {"class", TokenType::CLASS},   {"nil", TokenType::NIL}};
+      {"class", TokenType::CLASS},   {"nil", TokenType::NIL},
+      {"print", TokenType::PRINT},   {"fn", TokenType::FN}};
 };
 
 #endif // LEXER_H

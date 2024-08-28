@@ -55,7 +55,8 @@ enum class TokenType {
 
   ARRAY,      // Array keyword
   IDENTIFIER, // name
-
+  PRINT,
+  FN,
   // External Modules names
   EXTERN_MODULE, // extern
 
