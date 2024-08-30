@@ -21,11 +21,7 @@ auto main(int argc, char *argv[]) -> int {
   lexer.lex();
   auto parser = Parser{"main.vrtx", lexer.getTokens()};
   auto &e{parser.parse()};
-  auto v = PrettyPrintExpressionVisitor{};
-  // TODO: fix the part where the parser segfaults the whole thing if the file
-  // is empty
-  e[0]->acceptVisitor(&v);
-  auto p = Program{};
+  /*auto p = Program{};
   auto c = CodeGenVisitor{p};
   e[0]->acceptVisitor(&c);
   c.wrapUp();
@@ -35,6 +31,6 @@ auto main(int argc, char *argv[]) -> int {
   ;
   auto vm = VM{p};
   std::cout << "Process vortex interpreter:\n";
-  vm.run();
+  vm.run(); */
   return 0;
 }

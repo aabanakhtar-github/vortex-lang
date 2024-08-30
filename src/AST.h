@@ -114,11 +114,11 @@ struct PrintStatement : Statement {
 struct GlobalDeclaration : Statement {
   std::string Type;
   std::string Name;
-  ExpressionPtr assignedValue;
+  ExpressionPtr AssignedValue;
 };
 
 struct ProgramNode {
-  std::vector<StatementPtr> statements;
+  std::vector<StatementPtr> Statements;
 };
 
 #endif // !AST_H

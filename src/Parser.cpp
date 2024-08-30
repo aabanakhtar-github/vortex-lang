@@ -13,7 +13,7 @@ Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
 auto Parser::parse() -> ProgramNode & {
   // -1 is there for the EOF token
   while (pos_ < tokens_.size() - 1) {
-    result_.statements.push_back(std::move(parseStatement()));
+    result_.Statements.push_back(std::move(parseStatement()));
     if (is_panic_) {
       handlePanic();
     }
@@ -24,8 +24,16 @@ auto Parser::parse() -> ProgramNode & {
 
 auto Parser::handlePanic() -> void {
   while (peek().Type != TokenType::END_OF_FILE) {
-    switch (TokenType) {
-      // TODO: get syncing working I suppose
+    switch (peek().Type) {
+    case TokenType::CLASS:
+    case TokenType::FN:
+    case TokenType::PRINT:
+    case TokenType::ARRAY:
+      return;
+    case TokenType::SEMICOLON:
+      return;
+    default:
+      break;
     }
 
     consume();
@@ -55,10 +63,15 @@ auto Parser::peek() -> Token {
 
 auto Parser::parseStatement() -> StatementPtr {
   switch (peek().Type) {
-  default:
+  case TokenType::PRINT:
+    return parsePrint();
+  default: {
     auto invalid_stmt = std::make_unique<InvalidStatement>();
+    invalid_stmt->Line = tokens_[pos_].Line; // a little lazy but close
     is_panic_ = true;
+    reportError(filename_, "Invalid statement!", invalid_stmt->Line);
     return invalid_stmt;
+  }
   }
 }
 
