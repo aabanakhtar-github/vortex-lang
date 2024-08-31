@@ -8,6 +8,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <memory>
 
 auto main(int argc, char *argv[]) -> int {
   auto program = std::ifstream("main.vrtx", std::ios_base::in);
@@ -21,6 +22,18 @@ auto main(int argc, char *argv[]) -> int {
   lexer.lex();
   auto parser = Parser{"main.vrtx", lexer.getTokens()};
   auto &e{parser.parse()};
+  auto p = Program{};
+  auto g = StatementCodeGen{p};
+  for (auto &stmt : e.Statements) {
+    stmt->acceptVisitor(&g);
+  }
+
+  wrapUp(p);
+  p.dissassemble("main.vbyte");
+  auto vm = VM{p};
+  std::cout << "Vortex interpreter:\n";
+  vm.run();
+  program.close();
   /*auto p = Program{};
   auto c = CodeGenVisitor{p};
   e[0]->acceptVisitor(&c);

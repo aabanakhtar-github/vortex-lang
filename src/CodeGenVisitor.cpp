@@ -3,13 +3,14 @@
 #include "Program.h"
 #include "Token.h"
 #include "VortexTypes.h"
+#include <iostream>
 #include <tuple>
 
-CodeGenVisitor::CodeGenVisitor(Program &program) : program_{program} {}
+ExprCodeGen::ExprCodeGen(Program &program) : program_{program} {}
 
-auto CodeGenVisitor::visit(Expression *node) -> void {}
+auto ExprCodeGen::visit(Expression *node) -> void {}
 
-auto CodeGenVisitor::visit(BinaryOperation *node) -> void {
+auto ExprCodeGen::visit(BinaryOperation *node) -> void {
   node->Left->acceptVisitor(
       this); // generate the code for the right side and push it on
   node->Right->acceptVisitor(this);
@@ -49,7 +50,7 @@ auto CodeGenVisitor::visit(BinaryOperation *node) -> void {
     break;
   }
 }
-auto CodeGenVisitor::visit(UnaryOperation *node) -> void {
+auto ExprCodeGen::visit(UnaryOperation *node) -> void {
   node->Right->acceptVisitor(this);
   switch (node->Operator) {
   case TokenType::MINUS:
@@ -65,11 +66,11 @@ auto CodeGenVisitor::visit(UnaryOperation *node) -> void {
   }
 }
 
-auto CodeGenVisitor::visit(Grouping *node) -> void {
+auto ExprCodeGen::visit(Grouping *node) -> void {
   node->Expr->acceptVisitor(this);
 }
 
-auto CodeGenVisitor::visit(Literal *node) -> void {
+auto ExprCodeGen::visit(Literal *node) -> void {
   // returns a tuple of 3 bytes that contain the individual indices from 0, 1,
   // and then finally 2
   auto size_to_24_bit = [](std::size_t i)
@@ -133,6 +134,16 @@ auto CodeGenVisitor::visit(Literal *node) -> void {
   }
 }
 
-auto CodeGenVisitor::visit(InvalidExpression *node) -> void {}
+auto ExprCodeGen::visit(InvalidExpression *node) -> void {}
 
-auto CodeGenVisitor::wrapUp() -> void { program_.pushCode(HALT, 0); }
+StatementCodeGen::StatementCodeGen(Program &program) : program_{program} {}
+
+auto StatementCodeGen::visit(Statement *statement) -> void {}
+
+auto StatementCodeGen::visit(InvalidStatement *statement) -> void {}
+
+auto StatementCodeGen::visit(PrintStatement *statement) -> void {
+  auto expr_generator = ExprCodeGen{program_};
+  statement->Expr->acceptVisitor(&expr_generator);
+  program_.pushCode(PRINT, statement->Line);
+}

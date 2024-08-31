@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <format>
+#include <iostream>
 #include <memory>
 
 Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
@@ -221,8 +222,8 @@ auto Parser::parsePrimary() -> ExpressionPtr {
 auto Parser::parsePrint() -> StatementPtr {
   auto line = consume().Line; // PRINT Token
   auto expr = parseExpression();
-  if (!expect(TokenType::SEMICOLON,
-              "[rookie mistake] Expected ';' after statement")) {
+  if (expect(TokenType::SEMICOLON,
+             "[rookie mistake] Expected ';' after statement")) {
     consume(); // the ;
     auto print_node = std::make_unique<PrintStatement>(std::move(expr));
     print_node->Line = line;

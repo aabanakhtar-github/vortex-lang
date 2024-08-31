@@ -96,25 +96,44 @@ struct InvalidExpression : Expression {
   }
 };
 
+class StatementVisitor {
+public:
+  virtual auto visit(class Statement *statement) -> void = 0;
+  virtual auto visit(class InvalidStatement *statement) -> void = 0;
+  virtual auto visit(class PrintStatement *statement) -> void = 0;
+};
+
 // *STATEMENTS ARE INDIVIDUAL UNITS OF EXECUTION*
 struct Statement {
   std::size_t Line;
+
+  virtual auto acceptVisitor(class StatementVisitor *visitor) -> void = 0;
 };
 using StatementPtr = std::unique_ptr<Statement>;
 
 // representing statements that *SOMEONE* messed up
-struct InvalidStatement : Statement {};
+struct InvalidStatement : Statement {
+  virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
+    visitor->visit(this);
+  }
+};
 
 struct PrintStatement : Statement {
   ExpressionPtr Expr;
 
   PrintStatement(ExpressionPtr &&expr) : Expr(std::move(expr)) {}
+  virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
+    visitor->visit(this);
+  }
 };
 
 struct GlobalDeclaration : Statement {
   std::string Type;
   std::string Name;
   ExpressionPtr AssignedValue;
+  virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
+    visitor->visit(this);
+  }
 };
 
 struct ProgramNode {
