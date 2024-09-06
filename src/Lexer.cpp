@@ -35,6 +35,9 @@ auto Lexer::lex() -> void {
     case '[':
       addToken(TokenType::L_BRACE);
       break;
+    case ':':
+      addToken(TokenType::COLON);
+      break;
     case ']':
       addToken(TokenType::R_BRACE);
       break;

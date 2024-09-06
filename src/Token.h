@@ -42,7 +42,7 @@ enum class TokenType {
   EQUALITY,              // =
   INEQUALITY,            // !=
   DOT,                   // .
-
+  COLON,                 // ;
   // Symbols
   L_PAREN,   // (
   R_PAREN,   // )

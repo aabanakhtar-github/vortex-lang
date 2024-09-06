@@ -1,8 +1,10 @@
 #include "CodeGenVisitor.h"
+#include "AST.h"
 #include "Error.h"
 #include "Program.h"
 #include "Token.h"
 #include "VortexTypes.h"
+#include <format>
 #include <iostream>
 #include <tuple>
 
@@ -60,10 +62,40 @@ auto ExprCodeGen::visit(UnaryOperation *node) -> void {
     program_.pushCode(NOT, node->Line);
     break;
   default:
-    reportError("Parser generated unexpected op for unary node.", "",
-                node->Line);
+    reportError("Parser generated unexpected op for unary node.",
+                "no file name yet", node->Line);
     break;
   }
+}
+auto size_to_24_bit =
+    [](std::size_t i) -> std::tuple<std::uint8_t, std::uint8_t, std::uint8_t> {
+  auto b1 = static_cast<std::uint8_t>(i >> 16);
+  auto b2 = static_cast<std::uint8_t>(i >> 8);
+  auto b3 = static_cast<std::uint8_t>(i);
+  return {b1, b2, b3};
+};
+
+auto ExprCodeGen::visit(VariableEval *node) -> void {
+  if (!program_.globalExists(node->Name)) {
+    reportError(
+        std::format("TODO: add filename, Could not find global variable {}!",
+                    node->Name),
+        "no file name yet", node->Line);
+    return;
+  }
+  auto index =
+      program_.getGlobalIndex(node->Name); // get the index in the globals table
+  auto index_index =
+      program_.addConstant({.Type = ValueType::DOUBLE,
+                            .Value{.AsDouble = static_cast<double>(index)}});
+  auto indices = size_to_24_bit(index_index);
+  // load the global's index onto the stack
+  program_.pushCode(PUSHC, node->Line);
+  program_.pushCode(std::get<0>(indices), node->Line);
+  program_.pushCode(std::get<1>(indices), node->Line);
+  program_.pushCode(std::get<2>(indices), node->Line);
+  // pop it off and push on the value
+  program_.pushCode(LOAD_GLOB, node->Line);
 }
 
 auto ExprCodeGen::visit(Grouping *node) -> void {
@@ -141,6 +173,32 @@ StatementCodeGen::StatementCodeGen(Program &program) : program_{program} {}
 auto StatementCodeGen::visit(Statement *statement) -> void {}
 
 auto StatementCodeGen::visit(InvalidStatement *statement) -> void {}
+
+auto StatementCodeGen::visit(GlobalDeclaration *statement) -> void {
+  // TODO: refactor
+  auto size_to_24_bit = [](std::size_t i)
+      -> std::tuple<std::uint8_t, std::uint8_t, std::uint8_t> {
+    auto b1 = static_cast<std::uint8_t>(i >> 16);
+    auto b2 = static_cast<std::uint8_t>(i >> 8);
+    auto b3 = static_cast<std::uint8_t>(i);
+    return {b1, b2, b3};
+  };
+  auto expr_generator = ExprCodeGen{program_};
+  auto global = program_.createGlobal(statement->Name, {});
+  statement->AssignedValue->acceptVisitor(&expr_generator);
+  auto index = program_.getGlobalIndex(statement->Name);
+  // index of the index in the constant table
+  auto index_index =
+      program_.addConstant({.Type = ValueType::DOUBLE,
+                            .Value = {.AsDouble = static_cast<double>(index)}});
+  auto index_bytes = size_to_24_bit(
+      index_index); // so we can load it from the table of consts.
+  program_.pushCode(PUSHC, statement->Line);
+  program_.pushCode(std::get<0>(index_bytes), statement->Line);
+  program_.pushCode(std::get<1>(index_bytes), statement->Line);
+  program_.pushCode(std::get<2>(index_bytes), statement->Line);
+  program_.pushCode(SAVE_GLOB, statement->Line);
+}
 
 auto StatementCodeGen::visit(PrintStatement *statement) -> void {
   auto expr_generator = ExprCodeGen{program_};

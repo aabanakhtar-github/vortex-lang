@@ -27,6 +27,7 @@ public:
   virtual auto visit(class Grouping *node) -> void = 0;
   virtual auto visit(class Literal *node) -> void = 0;
   virtual auto visit(class InvalidExpression *node) -> void = 0;
+  virtual auto visit(class VariableEval *node) -> void = 0;
 };
 
 struct ASTNode {};
@@ -90,6 +91,16 @@ struct Literal : Expression {
   }
 };
 
+struct VariableEval : Expression {
+  std::string Name;
+
+  VariableEval(const std::string &name) : Name{name} {}
+
+  virtual auto acceptVisitor(class NodeVisitor *visitor) -> void {
+    visitor->visit(this);
+  }
+};
+
 struct InvalidExpression : Expression {
   virtual auto acceptVisitor(class NodeVisitor *visitor) -> void {
     visitor->visit(this);
@@ -101,6 +112,7 @@ public:
   virtual auto visit(class Statement *statement) -> void = 0;
   virtual auto visit(class InvalidStatement *statement) -> void = 0;
   virtual auto visit(class PrintStatement *statement) -> void = 0;
+  virtual auto visit(class GlobalDeclaration *statement) -> void = 0;
 };
 
 // *STATEMENTS ARE INDIVIDUAL UNITS OF EXECUTION*

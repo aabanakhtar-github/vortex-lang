@@ -33,6 +33,7 @@ private:
   auto parsePrimary() -> ExpressionPtr;
 
   // STATEMENT PARSING
+  auto parseIdentifier() -> StatementPtr;
   auto parsePrint() -> StatementPtr;
   auto parseGlobalDecl() -> StatementPtr;
 

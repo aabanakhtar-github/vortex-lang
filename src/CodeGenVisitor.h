@@ -11,6 +11,7 @@ public:
   auto visit(Grouping *node) -> void override;
   auto visit(Literal *node) -> void override;
   auto visit(InvalidExpression *node) -> void override;
+  auto visit(VariableEval *node) -> void override;
 
 private:
   Program &program_;
@@ -20,6 +21,7 @@ class StatementCodeGen : public StatementVisitor {
 public:
   explicit StatementCodeGen(Program &program);
   auto visit(Statement *statement) -> void override;
+  auto visit(GlobalDeclaration *statement) -> void override;
   auto visit(PrintStatement *statement) -> void override;
   auto visit(InvalidStatement *statement) -> void override;
 

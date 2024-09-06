@@ -7,6 +7,8 @@
 #include <format>
 #include <iostream>
 #include <memory>
+#include <set>
+#include <unordered_map>
 
 Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
     : filename_{filename}, tokens_{tokens} {}
@@ -32,11 +34,11 @@ auto Parser::handlePanic() -> void {
     case TokenType::ARRAY:
       return;
     case TokenType::SEMICOLON:
+      consume(); // semi colon is not a great way to start statements
       return;
     default:
       break;
     }
-
     consume();
   }
 }
@@ -66,6 +68,8 @@ auto Parser::parseStatement() -> StatementPtr {
   switch (peek().Type) {
   case TokenType::PRINT:
     return parsePrint();
+  case TokenType::IDENTIFIER:
+    return parseIdentifier();
   default: {
     auto invalid_stmt = std::make_unique<InvalidStatement>();
     invalid_stmt->Line = tokens_[pos_].Line; // a little lazy but close
@@ -170,6 +174,13 @@ auto Parser::parsePrimary() -> ExpressionPtr {
     is_panic_ = true;
     return error_node;
   }
+  case TokenType::IDENTIFIER: {
+    const auto &this_tok = consume();
+    auto this_node = std::make_unique<VariableEval>(
+        this_tok.Lexeme); // store the variable name
+    this_node->Line = this_tok.Line;
+    return this_node;
+  }
   case TokenType::STRING_LITERAL: {
     const auto &this_tok = consume();
     auto this_node = std::make_unique<Literal>(this_tok.Value);
@@ -230,10 +241,56 @@ auto Parser::parsePrint() -> StatementPtr {
     return print_node;
   }
   // bro forgot the semicolon
-  consume(); // get rid of offender
+  consume(); // get rid of offending token which isn't a semicolon
   auto error_stmt = std::make_unique<InvalidStatement>();
   error_stmt->Line = line;
   return error_stmt;
 }
 
-auto Parser::parseGlobalDecl() -> StatementPtr { return {}; }
+// TODO: handle function calls
+auto Parser::parseIdentifier() -> StatementPtr { return parseGlobalDecl(); }
+
+auto Parser::parseGlobalDecl() -> StatementPtr {
+  static std::set<TokenType> valid_token_types = {
+      TokenType::FLOAT,
+      TokenType::STRING,
+  };
+  auto identifier = consume();
+  auto line = identifier.Line;
+  auto name = identifier.Lexeme;
+  auto error = [=]() -> StatementPtr {
+    auto error_stmt = std::make_unique<InvalidStatement>();
+    error_stmt->Line = line;
+    return error_stmt;
+  };
+  // syntax: a: Int -> 5;
+  if (!expect(TokenType::COLON, "Expected ':' after identifier.")) {
+    consume(); // get rid of offending
+    return error();
+  }
+  consume(); // remove :
+  bool found_valid_id = false;
+  if (!valid_token_types.contains(peek().Type)) {
+    std::cerr << "Expected a valid identifier after variable name.\n";
+    consume(); // remove offending
+    return error();
+  }
+  auto type = consume().Lexeme;
+  if (!expect(TokenType::ASSIGNMENT,
+              "Expected -> after variable declaration")) {
+    consume(); // haha remove offending
+    return error();
+  }
+  consume(); // remove ->
+  auto value = parseExpression();
+  if (!expect(TokenType::SEMICOLON, "Expected ; after statement")) {
+    consume();
+    return error();
+  }
+  consume(); // get rid of ;
+  auto var_decl_stmt = std::make_unique<GlobalDeclaration>();
+  var_decl_stmt->Type = type;
+  var_decl_stmt->Name = name;
+  var_decl_stmt->AssignedValue = std::move(value);
+  return var_decl_stmt;
+}

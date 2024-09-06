@@ -109,6 +109,8 @@ auto toString(TokenType type) -> std::string {
   case TokenType::COMMA:
     ss << "COMMA";
     break;
+  case TokenType::COLON:
+    ss << "COLON";
   // Collection Types
   case TokenType::ARRAY:
     ss << "ARRAY";
