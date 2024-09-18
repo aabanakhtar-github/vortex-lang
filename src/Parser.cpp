@@ -251,6 +251,7 @@ auto Parser::parsePrint() -> StatementPtr {
 // TODO: handle function calls
 auto Parser::parseIdentifier() -> StatementPtr {
   auto identifier = consume();
+  // TODO: make it work.
   return parseGlobalDecl(identifier);
 }
 
