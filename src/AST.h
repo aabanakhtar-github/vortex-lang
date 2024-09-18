@@ -148,6 +148,14 @@ struct GlobalDeclaration : Statement {
   }
 };
 
+struct Assignment : Statement {
+  std::string Name;
+  ExpressionPtr AssignmentValue;
+  virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
+    visitor->visit(this);
+  }
+};
+
 struct ProgramNode {
   std::vector<StatementPtr> Statements;
 };

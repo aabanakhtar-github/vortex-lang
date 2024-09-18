@@ -13,7 +13,7 @@ public:
 
 private:
   auto consume() -> Token;
-  auto peek() -> Token;
+  auto peek(std::size_t n = 0) -> Token;
   auto expect(TokenType type, std::string_view error) -> bool;
   auto handlePanic() -> void;
   // NOTE: precedence is from least to highest
@@ -33,9 +33,11 @@ private:
   auto parsePrimary() -> ExpressionPtr;
 
   // STATEMENT PARSING
+  auto errorStatement(const Token &token) -> StatementPtr;
   auto parseIdentifier() -> StatementPtr;
   auto parsePrint() -> StatementPtr;
-  auto parseGlobalDecl() -> StatementPtr;
+  auto parseGlobalDecl(const Token &identifier_name) -> StatementPtr;
+  auto parseAssignment(const Token &identifier_name) -> StatementPtr;
 
 private:
   std::size_t pos_ = 0;

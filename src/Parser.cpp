@@ -8,7 +8,11 @@
 #include <iostream>
 #include <memory>
 #include <set>
-#include <unordered_map>
+
+namespace {
+const auto builtin_types =
+    std::set<TokenType>{TokenType::FLOAT, TokenType::STRING};
+}
 
 Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
     : filename_{filename}, tokens_{tokens} {}
@@ -57,9 +61,9 @@ auto Parser::consume() -> Token {
   return tokens_[pos_ - 1];
 }
 
-auto Parser::peek() -> Token {
-  if (pos_ < tokens_.size()) {
-    return tokens_[pos_];
+auto Parser::peek(std::size_t n) -> Token {
+  if (pos_ + n < tokens_.size()) {
+    return tokens_[pos_ + n];
   }
   return Token{.Type = TokenType::END_OF_FILE};
 }
@@ -241,51 +245,37 @@ auto Parser::parsePrint() -> StatementPtr {
     return print_node;
   }
   // bro forgot the semicolon
-  consume(); // get rid of offending token which isn't a semicolon
-  auto error_stmt = std::make_unique<InvalidStatement>();
-  error_stmt->Line = line;
-  return error_stmt;
+  return errorStatement(consume());
 }
 
 // TODO: handle function calls
-auto Parser::parseIdentifier() -> StatementPtr { return parseGlobalDecl(); }
-
-auto Parser::parseGlobalDecl() -> StatementPtr {
-  static std::set<TokenType> valid_token_types = {
-      TokenType::FLOAT,
-      TokenType::STRING,
-  };
+auto Parser::parseIdentifier() -> StatementPtr {
   auto identifier = consume();
+  return parseGlobalDecl(identifier);
+}
+
+auto Parser::parseGlobalDecl(const Token &identifier) -> StatementPtr {
   auto line = identifier.Line;
   auto name = identifier.Lexeme;
-  auto error = [=]() -> StatementPtr {
-    auto error_stmt = std::make_unique<InvalidStatement>();
-    error_stmt->Line = line;
-    return error_stmt;
-  };
   // syntax: a: Int -> 5;
   if (!expect(TokenType::COLON, "Expected ':' after identifier.")) {
-    consume(); // get rid of offending
-    return error();
+    return errorStatement(consume()); // get rid of offending (i know)
   }
   consume(); // remove :
   bool found_valid_id = false;
-  if (!valid_token_types.contains(peek().Type)) {
-    std::cerr << "Expected a valid identifier after variable name.\n";
-    consume(); // remove offending
-    return error();
+  if (!::builtin_types.contains(peek().Type)) {
+    std::cerr << "Expected a valid type after variable name.\n";
+    return errorStatement(consume());
   }
   auto type = consume().Lexeme;
   if (!expect(TokenType::ASSIGNMENT,
-              "Expected -> after variable declaration")) {
-    consume(); // haha remove offending
-    return error();
+              "Expected -> after variable declaration.")) {
+    return errorStatement(consume());
   }
   consume(); // remove ->
   auto value = parseExpression();
   if (!expect(TokenType::SEMICOLON, "Expected ; after statement")) {
-    consume();
-    return error();
+    return errorStatement(consume());
   }
   consume(); // get rid of ;
   auto var_decl_stmt = std::make_unique<GlobalDeclaration>();
@@ -293,4 +283,17 @@ auto Parser::parseGlobalDecl() -> StatementPtr {
   var_decl_stmt->Name = name;
   var_decl_stmt->AssignedValue = std::move(value);
   return var_decl_stmt;
+}
+
+auto Parser::parseAssignment(const Token &identifier) -> StatementPtr {
+  if (!expect(TokenType::ASSIGNMENT, "Expected -> after identifier.")) {
+    return errorStatement(consume());
+  }
+  return {};
+}
+
+auto Parser::errorStatement(const Token &token) -> StatementPtr {
+  auto invalid_stmt = std::make_unique<InvalidStatement>();
+  invalid_stmt->Line = token.Line;
+  return invalid_stmt;
 }
