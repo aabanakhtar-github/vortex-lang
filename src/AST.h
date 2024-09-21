@@ -113,6 +113,7 @@ public:
   virtual auto visit(class InvalidStatement *statement) -> void = 0;
   virtual auto visit(class PrintStatement *statement) -> void = 0;
   virtual auto visit(class GlobalDeclaration *statement) -> void = 0;
+  virtual auto visit(class Assignment *assignment) -> void = 0;
 };
 
 // *STATEMENTS ARE INDIVIDUAL UNITS OF EXECUTION*
