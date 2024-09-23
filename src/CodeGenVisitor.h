@@ -24,6 +24,7 @@ public:
   auto visit(GlobalDeclaration *statement) -> void override;
   auto visit(PrintStatement *statement) -> void override;
   auto visit(InvalidStatement *statement) -> void override;
+  auto visit(Assignment *statement) -> void override;
 
 private:
   Program &program_;

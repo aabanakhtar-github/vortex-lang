@@ -251,7 +251,10 @@ auto Parser::parsePrint() -> StatementPtr {
 // TODO: handle function calls
 auto Parser::parseIdentifier() -> StatementPtr {
   auto identifier = consume();
-  // TODO: make it work.
+  auto next = peek();
+  if (next.Type == TokenType::ASSIGNMENT) {
+    return parseAssignment(identifier);
+  }
   return parseGlobalDecl(identifier);
 }
 
@@ -290,7 +293,17 @@ auto Parser::parseAssignment(const Token &identifier) -> StatementPtr {
   if (!expect(TokenType::ASSIGNMENT, "Expected -> after identifier.")) {
     return errorStatement(consume());
   }
-  return {};
+  consume(); // ->
+  auto assigned_value = parseExpression();
+  if (!expect(TokenType::SEMICOLON, "Expected ; after identifier")) {
+    return errorStatement(consume());
+  }
+  consume(); // ->
+  auto stmt = std::make_unique<Assignment>();
+  stmt->Line = identifier.Line;
+  stmt->Name = identifier.Lexeme;
+  stmt->AssignmentValue = std::move(assigned_value);
+  return stmt;
 }
 
 auto Parser::errorStatement(const Token &token) -> StatementPtr {
