@@ -6,8 +6,6 @@
 #include "Util.h"
 #include "VortexTypes.h"
 #include <format>
-#include <iostream>
-#include <tuple>
 
 ExprCodeGen::ExprCodeGen(Program &program) : program_{program} {}
 
@@ -160,10 +158,12 @@ auto StatementCodeGen::visit(Statement *statement) -> void {}
 
 auto StatementCodeGen::visit(InvalidStatement *statement) -> void {}
 
-auto StatementCodeGen::visit(GlobalDeclaration *statement) -> void {
-  // TODO: refactor
-
+auto StatementCodeGen::visit(VariableDeclaration *statement) -> void {
   auto expr_generator = ExprCodeGen{program_};
+  if (current_scope_depth_ != 0) {
+    program_.pushCode(ADD_LOCAL, statement->Line);
+    return;
+  }
   auto global = program_.createGlobal(statement->Name, {});
   statement->AssignedValue->acceptVisitor(&expr_generator);
   auto index = program_.getGlobalIndex(statement->Name);
@@ -201,4 +201,12 @@ auto StatementCodeGen::visit(Assignment *statement) -> void {
   program_.pushCode(std::get<1>(index_as_bytes), statement->Line);
   program_.pushCode(std::get<2>(index_as_bytes), statement->Line);
   program_.pushCode(SAVE_GLOB, statement->Line);
+}
+
+auto StatementCodeGen::visit(BlockScope *statement) -> void {
+  ++current_scope_depth_;
+  for (auto &statement : statement->Statements) {
+    statement->acceptVisitor(this);
+  }
+  --current_scope_depth_;
 }

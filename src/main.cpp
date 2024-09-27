@@ -2,7 +2,6 @@
 #include "CodeGenVisitor.h"
 #include "Lexer.h"
 #include "Parser.h"
-#include "PrettyPrintExpressionVisitor.h"
 #include "Program.h"
 #include "VM.h"
 #include <fstream>

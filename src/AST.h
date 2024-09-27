@@ -112,14 +112,16 @@ public:
   virtual auto visit(class Statement *statement) -> void = 0;
   virtual auto visit(class InvalidStatement *statement) -> void = 0;
   virtual auto visit(class PrintStatement *statement) -> void = 0;
-  virtual auto visit(class GlobalDeclaration *statement) -> void = 0;
+  virtual auto visit(class VariableDeclaration *statement) -> void = 0;
   virtual auto visit(class Assignment *assignment) -> void = 0;
+  virtual auto visit(class BlockScope *blockScope) -> void = 0;
 };
 
 // *STATEMENTS ARE INDIVIDUAL UNITS OF EXECUTION*
 struct Statement {
   std::size_t Line;
 
+  virtual ~Statement() {}
   virtual auto acceptVisitor(class StatementVisitor *visitor) -> void = 0;
 };
 using StatementPtr = std::unique_ptr<Statement>;
@@ -140,7 +142,7 @@ struct PrintStatement : Statement {
   }
 };
 
-struct GlobalDeclaration : Statement {
+struct VariableDeclaration : Statement {
   std::string Type;
   std::string Name;
   ExpressionPtr AssignedValue;
@@ -152,6 +154,14 @@ struct GlobalDeclaration : Statement {
 struct Assignment : Statement {
   std::string Name;
   ExpressionPtr AssignmentValue;
+  virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
+    visitor->visit(this);
+  }
+};
+
+struct BlockScope : Statement {
+  std::vector<std::unique_ptr<Statement>> Statements;
+  std::size_t ScopeDepth = 0;
   virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
     visitor->visit(this);
   }

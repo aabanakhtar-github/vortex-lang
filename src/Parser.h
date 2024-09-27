@@ -29,19 +29,20 @@ private:
   auto parseFactor() -> ExpressionPtr;
   auto parseUnary() -> ExpressionPtr;
   // TODO: auto parseFunctionCall();
-  // TODO: auto parseArraySubscript();
   auto parsePrimary() -> ExpressionPtr;
 
   // STATEMENT PARSING
   auto errorStatement(const Token &token) -> StatementPtr;
   auto parseIdentifier() -> StatementPtr;
   auto parsePrint() -> StatementPtr;
-  auto parseGlobalDecl(const Token &identifier_name) -> StatementPtr;
+  auto parseVarDecl(const Token &identifier_name) -> StatementPtr;
   auto parseAssignment(const Token &identifier_name) -> StatementPtr;
+  auto parseBlock() -> StatementPtr;
 
 private:
   std::size_t pos_ = 0;
   bool is_panic_ = false;
+  std::size_t current_scope_depth_ = 0;
   std::string filename_;
   const std::vector<Token> &tokens_;
   ProgramNode result_;

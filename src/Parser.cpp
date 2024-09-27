@@ -7,6 +7,7 @@
 #include <format>
 #include <iostream>
 #include <memory>
+#include <ostream>
 #include <set>
 
 namespace {
@@ -74,11 +75,14 @@ auto Parser::parseStatement() -> StatementPtr {
     return parsePrint();
   case TokenType::IDENTIFIER:
     return parseIdentifier();
+  case TokenType::L_BRACE:
+    return parseBlock();
   default: {
     auto invalid_stmt = std::make_unique<InvalidStatement>();
     invalid_stmt->Line = tokens_[pos_].Line; // a little lazy but close
     is_panic_ = true;
-    reportError(filename_, "Invalid statement!", invalid_stmt->Line);
+    reportError(filename_, std::format("Invalid statement {}!", peek().Lexeme),
+                invalid_stmt->Line);
     return invalid_stmt;
   }
   }
@@ -255,10 +259,10 @@ auto Parser::parseIdentifier() -> StatementPtr {
   if (next.Type == TokenType::ASSIGNMENT) {
     return parseAssignment(identifier);
   }
-  return parseGlobalDecl(identifier);
+  return parseVarDecl(identifier);
 }
 
-auto Parser::parseGlobalDecl(const Token &identifier) -> StatementPtr {
+auto Parser::parseVarDecl(const Token &identifier) -> StatementPtr {
   auto line = identifier.Line;
   auto name = identifier.Lexeme;
   // syntax: a: Int -> 5;
@@ -310,4 +314,28 @@ auto Parser::errorStatement(const Token &token) -> StatementPtr {
   auto invalid_stmt = std::make_unique<InvalidStatement>();
   invalid_stmt->Line = token.Line;
   return invalid_stmt;
+}
+
+auto Parser::parseBlock() -> StatementPtr {
+  ++current_scope_depth_;
+  auto block = std::make_unique<BlockScope>();
+  block->Line = consume().Line;
+  // increase depth of scope
+  block->ScopeDepth = current_scope_depth_;
+  while (peek().Type != TokenType::END_OF_FILE &&
+         peek().Type != TokenType::R_BRACE) {
+    std::cout << "UWU" << std::endl;
+    block->Statements.emplace_back(std::move(parseStatement()));
+    if (is_panic_) {
+      return errorStatement(peek(-1));
+    }
+  }
+  --current_scope_depth_; // decrease the depth of scope
+  if (!expect(TokenType::R_BRACE, "Expected } to close block!")) {
+    return errorStatement(consume());
+  }
+  std::cout << toString(consume().Type) << std::endl;
+  std::cout << toString(peek().Type) << std::endl;
+  ; // the }
+  return block;
 }
