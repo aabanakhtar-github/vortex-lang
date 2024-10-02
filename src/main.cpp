@@ -22,7 +22,7 @@ auto main(int argc, char *argv[]) -> int {
   auto parser = Parser{"main.vrtx", lexer.getTokens()};
   auto &e{parser.parse()};
   auto p = Program{};
-  auto g = StatementCodeGen{p};
+  auto g = CodeGen{p};
   for (auto &stmt : e.Statements) {
     stmt->acceptVisitor(&g);
   }

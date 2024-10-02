@@ -286,7 +286,7 @@ auto Parser::parseVarDecl(const Token &identifier) -> StatementPtr {
     return errorStatement(consume());
   }
   consume(); // get rid of ;
-  auto var_decl_stmt = std::make_unique<GlobalDeclaration>();
+  auto var_decl_stmt = std::make_unique<VariableDeclaration>();
   var_decl_stmt->Type = type;
   var_decl_stmt->Name = name;
   var_decl_stmt->AssignedValue = std::move(value);
@@ -320,22 +320,21 @@ auto Parser::parseBlock() -> StatementPtr {
   ++current_scope_depth_;
   auto block = std::make_unique<BlockScope>();
   block->Line = consume().Line;
-  // increase depth of scope
-  block->ScopeDepth = current_scope_depth_;
   while (peek().Type != TokenType::END_OF_FILE &&
          peek().Type != TokenType::R_BRACE) {
-    std::cout << "UWU" << std::endl;
-    block->Statements.emplace_back(std::move(parseStatement()));
+    block->Statements.push_back(parseStatement());
     if (is_panic_) {
-      return errorStatement(peek(-1));
+      --current_scope_depth_;
+      return errorStatement(consume());
     }
   }
+  // increase depth of scope
+  block->ScopeDepth = current_scope_depth_;
   --current_scope_depth_; // decrease the depth of scope
   if (!expect(TokenType::R_BRACE, "Expected } to close block!")) {
     return errorStatement(consume());
   }
   std::cout << toString(consume().Type) << std::endl;
   std::cout << toString(peek().Type) << std::endl;
-  ; // the }
   return block;
 }

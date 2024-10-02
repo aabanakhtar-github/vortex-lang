@@ -5,13 +5,15 @@
 #include "Token.h"
 #include "Util.h"
 #include "VortexTypes.h"
+#include <chrono>
 #include <format>
+#include <iterator>
 
-ExprCodeGen::ExprCodeGen(Program &program) : program_{program} {}
+CodeGen::CodeGen(Program &program) : program_{program} {}
 
-auto ExprCodeGen::visit(Expression *node) -> void {}
+auto CodeGen::visit(Expression *node) -> void {}
 
-auto ExprCodeGen::visit(BinaryOperation *node) -> void {
+auto CodeGen::visit(BinaryOperation *node) -> void {
   node->Left->acceptVisitor(
       this); // generate the code for the right side and push it on
   node->Right->acceptVisitor(this);
@@ -51,7 +53,8 @@ auto ExprCodeGen::visit(BinaryOperation *node) -> void {
     break;
   }
 }
-auto ExprCodeGen::visit(UnaryOperation *node) -> void {
+
+auto CodeGen::visit(UnaryOperation *node) -> void {
   node->Right->acceptVisitor(this);
   switch (node->Operator) {
   case TokenType::MINUS:
@@ -67,8 +70,31 @@ auto ExprCodeGen::visit(UnaryOperation *node) -> void {
   }
 }
 
-auto ExprCodeGen::visit(VariableEval *node) -> void {
-  if (!program_.globalExists(node->Name)) {
+auto CodeGen::visit(VariableEval *node) -> void {
+  // if we are in a scope and we find the variable name as a local
+  auto local_iter = std::find_if(
+      local_table_.begin(), local_table_.end(),
+      [&](const Local &local) -> bool { return local.Name == node->Name; });
+
+  if (current_scope_depth_ != 0 && local_iter != local_table_.end()) {
+    // we need to do the magic of getting a local now
+    auto local_offset = std::distance(
+        local_table_.begin(), local_iter); // the offset from the stack base
+    auto local_offset_index = program_.addConstant(VortexValue{
+        .Type = ValueType::DOUBLE,
+        .Value = {.AsDouble = static_cast<double>(
+                      local_offset)}}); // the index as a vortex value so we can
+                                        // push it onto the stack :(
+    auto local_offset_indicies = sizeToTriByte(local_offset_index);
+    program_.pushCode(PUSHC, node->Line);
+    program_.pushCode(PUSHC, node->Line);
+    program_.pushCode(std::get<0>(local_offset_indicies), node->Line);
+    program_.pushCode(std::get<1>(local_offset_indicies), node->Line);
+    program_.pushCode(std::get<2>(local_offset_indicies), node->Line);
+    // get the local based on it's stack offset
+    program_.pushCode(GET_LOCAL, 0);
+  } else if (!program_.globalExists(
+                 node->Name)) { // it must be global or crash!
     reportError(
         std::format("TODO: add filename, Could not find global variable {}!",
                     node->Name),
@@ -91,11 +117,9 @@ auto ExprCodeGen::visit(VariableEval *node) -> void {
   program_.pushCode(LOAD_GLOB, node->Line);
 }
 
-auto ExprCodeGen::visit(Grouping *node) -> void {
-  node->Expr->acceptVisitor(this);
-}
+auto CodeGen::visit(Grouping *node) -> void { node->Expr->acceptVisitor(this); }
 
-auto ExprCodeGen::visit(Literal *node) -> void {
+auto CodeGen::visit(Literal *node) -> void {
   // returns a tuple of 3 bytes that contain the individual indices from 0, 1,
   // and then finally 2
   switch (LiteralVariantType{node->Value.index()}) {
@@ -150,22 +174,35 @@ auto ExprCodeGen::visit(Literal *node) -> void {
   }
 }
 
-auto ExprCodeGen::visit(InvalidExpression *node) -> void {}
+auto CodeGen::visit(InvalidExpression *node) -> void {}
 
-StatementCodeGen::StatementCodeGen(Program &program) : program_{program} {}
+auto CodeGen::visit(Statement *statement) -> void {}
 
-auto StatementCodeGen::visit(Statement *statement) -> void {}
+auto CodeGen::visit(InvalidStatement *statement) -> void {}
 
-auto StatementCodeGen::visit(InvalidStatement *statement) -> void {}
-
-auto StatementCodeGen::visit(VariableDeclaration *statement) -> void {
-  auto expr_generator = ExprCodeGen{program_};
+auto CodeGen::visit(VariableDeclaration *statement) -> void {
   if (current_scope_depth_ != 0) {
+    if (std::find_if(local_table_.begin(), local_table_.end(),
+                     [&](const Local &local) -> bool {
+                       return local.Name == statement->Name;
+                     }) != local_table_.end() &&
+        program_.globalExists(statement->Name)) {
+      // we already have this variable in a global or local scope
+      reportError("Cannot have duplicate variable!", "TODO: filename",
+                  statement->Line);
+      return;
+    }
+    // create a local variable from the evaluated expression on the stack
     program_.pushCode(ADD_LOCAL, statement->Line);
+    local_table_.push_back(Local{
+        .Depth = current_scope_depth_,
+        .Name = statement->Name,
+    });
     return;
   }
+  // otherwise its a global
   auto global = program_.createGlobal(statement->Name, {});
-  statement->AssignedValue->acceptVisitor(&expr_generator);
+  statement->AssignedValue->acceptVisitor(this); // handle the value
   auto index = program_.getGlobalIndex(statement->Name);
   // index of the index in the constant table
   auto index_index =
@@ -180,14 +217,13 @@ auto StatementCodeGen::visit(VariableDeclaration *statement) -> void {
   program_.pushCode(SAVE_GLOB, statement->Line);
 }
 
-auto StatementCodeGen::visit(PrintStatement *statement) -> void {
-  auto expr_generator = ExprCodeGen{program_};
-  statement->Expr->acceptVisitor(&expr_generator);
+auto CodeGen::visit(PrintStatement *statement) -> void {
+  statement->Expr->acceptVisitor(this);
   program_.pushCode(PRINT, statement->Line);
 }
 
-auto StatementCodeGen::visit(Assignment *statement) -> void {
-  auto expr_generator = ExprCodeGen{program_};
+auto CodeGen::visit(Assignment *statement) -> void {
+  auto expr_generator = CodeGen{program_};
   statement->AssignmentValue->acceptVisitor(&expr_generator);
   auto index = program_.getGlobalIndex(statement->Name);
   auto index_index = program_.addConstant(VortexValue{
@@ -203,10 +239,16 @@ auto StatementCodeGen::visit(Assignment *statement) -> void {
   program_.pushCode(SAVE_GLOB, statement->Line);
 }
 
-auto StatementCodeGen::visit(BlockScope *statement) -> void {
+auto CodeGen::visit(BlockScope *statement) -> void {
   ++current_scope_depth_;
   for (auto &statement : statement->Statements) {
     statement->acceptVisitor(this);
+  }
+  // clean up local variables
+  for (auto &local : local_table_) {
+    if (local.Depth == current_scope_depth_) {
+      program_.pushCode(POP, (statement->Statements.end() - 1)->get()->Line);
+    }
   }
   --current_scope_depth_;
 }
