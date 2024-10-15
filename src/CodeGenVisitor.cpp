@@ -70,6 +70,7 @@ auto CodeGen::visit(UnaryOperation *node) -> void {
   }
 }
 
+#include <iostream>
 auto CodeGen::visit(VariableEval *node) -> void {
   // if we are in a scope and we find the variable name as a local
   auto local_iter = std::find_if(
@@ -93,6 +94,7 @@ auto CodeGen::visit(VariableEval *node) -> void {
     program_.pushCode(std::get<2>(local_offset_indicies), node->Line);
     // get the local based on it's stack offset
     program_.pushCode(GET_LOCAL, 0);
+    return;
   } else if (!program_.globalExists(
                  node->Name)) { // it must be global or crash!
     reportError(
@@ -181,6 +183,7 @@ auto CodeGen::visit(Statement *statement) -> void {}
 auto CodeGen::visit(InvalidStatement *statement) -> void {}
 
 auto CodeGen::visit(VariableDeclaration *statement) -> void {
+  statement->AssignedValue->acceptVisitor(this); // handle the value
   if (current_scope_depth_ != 0) {
     if (std::find_if(local_table_.begin(), local_table_.end(),
                      [&](const Local &local) -> bool {
@@ -202,7 +205,6 @@ auto CodeGen::visit(VariableDeclaration *statement) -> void {
   }
   // otherwise its a global
   auto global = program_.createGlobal(statement->Name, {});
-  statement->AssignedValue->acceptVisitor(this); // handle the value
   auto index = program_.getGlobalIndex(statement->Name);
   // index of the index in the constant table
   auto index_index =
@@ -223,8 +225,33 @@ auto CodeGen::visit(PrintStatement *statement) -> void {
 }
 
 auto CodeGen::visit(Assignment *statement) -> void {
-  auto expr_generator = CodeGen{program_};
-  statement->AssignmentValue->acceptVisitor(&expr_generator);
+  statement->AssignmentValue->acceptVisitor(
+      this); // push the assigned value onto the stack
+  // check if its a local
+  if (current_scope_depth_ != 0) {
+    auto it = std::find_if(local_table_.begin(), local_table_.end(),
+                           [&](const Local &local) -> bool {
+                             return local.Name == statement->Name;
+                           });
+    if (!(it == local_table_.end())) {
+      auto local_offset = std::distance(local_table_.begin(), it);
+      auto local_offset_index = program_.addConstant(VortexValue{
+          .Type = ValueType::DOUBLE,
+          .Value = {.AsDouble = static_cast<double>(
+                        local_offset)}}); // as an index in the constants table
+      auto local_offset_bytes = sizeToTriByte(local_offset_index);
+      program_.pushCode(PUSHC, statement->Line);
+      program_.pushCode(std::get<0>(local_offset_bytes), statement->Line);
+      program_.pushCode(std::get<1>(local_offset_bytes), statement->Line);
+      program_.pushCode(std::get<2>(local_offset_bytes), statement->Line);
+      program_.pushCode(SET_LOCAL, statement->Line);
+    }
+  }
+  // otherwise its global
+  if (!program_.globalExists(statement->Name)) { // if we didnt find it
+    reportError(std::format("Cannot find variable {}!", statement->Name),
+                "TODO: filename", statement->Line);
+  }
   auto index = program_.getGlobalIndex(statement->Name);
   auto index_index = program_.addConstant(VortexValue{
       .Type = ValueType::DOUBLE,
