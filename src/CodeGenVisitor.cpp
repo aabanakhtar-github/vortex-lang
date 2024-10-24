@@ -88,7 +88,6 @@ auto CodeGen::visit(VariableEval *node) -> void {
                                         // push it onto the stack :(
     auto local_offset_indicies = sizeToTriByte(local_offset_index);
     program_.pushCode(PUSHC, node->Line);
-    program_.pushCode(PUSHC, node->Line);
     program_.pushCode(std::get<0>(local_offset_indicies), node->Line);
     program_.pushCode(std::get<1>(local_offset_indicies), node->Line);
     program_.pushCode(std::get<2>(local_offset_indicies), node->Line);
@@ -251,6 +250,7 @@ auto CodeGen::visit(Assignment *statement) -> void {
   if (!program_.globalExists(statement->Name)) { // if we didnt find it
     reportError(std::format("Cannot find variable {}!", statement->Name),
                 "TODO: filename", statement->Line);
+    return;
   }
   auto index = program_.getGlobalIndex(statement->Name);
   auto index_index = program_.addConstant(VortexValue{

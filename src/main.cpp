@@ -28,7 +28,7 @@ auto main(int argc, char *argv[]) -> int {
   }
 
   wrapUp(p);
-  // p.dissassemble("main.vbyte");
+  p.dissassemble("main.vbyte");
   auto vm = VM{p};
   std::cout << "Vortex interpreter:\n";
   vm.run();
