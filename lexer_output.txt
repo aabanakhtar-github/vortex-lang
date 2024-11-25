@@ -1,0 +1,1 @@
+[TYPE: END_OF_FILE]; [Value: NIL]; [LINE: 1]; [Lexeme: {}];
