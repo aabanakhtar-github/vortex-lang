@@ -1,6 +1,8 @@
 # Vortex Programming Language
-(Hopefully the name doesn't hurt)
-A Programming Language Interpreter (Bytecode VM) for a simple procedural language with structures and arrays experiment. 
+A custom programming language with most basic features (control flow, variables, functions) implemented on top of a custom bytecode interpreter.
+
+# Examples
+Coming soon.
 
 # Building
 Coming soon.
