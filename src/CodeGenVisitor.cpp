@@ -275,7 +275,7 @@ auto CodeGen::visit(BlockScope *statement) -> void {
   // clean up local variables
   for (auto &local : local_table_) {
     if (local.Depth == current_scope_depth_) {
-      program_.pushCode(POP, (statement->Statements.end() - 1)->get()->Line);
+      program_.pushCode(POP_LOCAL, (statement->Statements.end() - 1)->get()->Line);
       local_table_.erase(local_table_.begin() + local_table_.size() - 1);
     }
   }
