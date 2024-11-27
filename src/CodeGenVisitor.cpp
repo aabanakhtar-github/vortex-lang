@@ -92,7 +92,11 @@ auto CodeGen::visit(VariableEval *node) -> void {
     program_.pushCode(std::get<1>(local_offset_indicies), node->Line);
     program_.pushCode(std::get<2>(local_offset_indicies), node->Line);
     // get the local based on it's stack offset
+<<<<<<< HEAD
     program_.pushCode(GET_LOCAL, node->Line);
+=======
+    program_.pushCode(GET_LOCAL, 0);
+>>>>>>> f6dd640e4efb5d3a5aad7619a5bee53cf1e379ae
     return;
   } else if (!program_.globalExists(
                  node->Name)) { // it must be global or crash!
@@ -183,7 +187,11 @@ auto CodeGen::visit(InvalidStatement *statement) -> void {}
 
 auto CodeGen::visit(VariableDeclaration *statement) -> void {
   statement->AssignedValue->acceptVisitor(this); // handle the value
+<<<<<<< HEAD
   if (current_scope_depth_ != 0) { // if its local
+=======
+  if (current_scope_depth_ != 0) {
+>>>>>>> f6dd640e4efb5d3a5aad7619a5bee53cf1e379ae
     if (std::find_if(local_table_.begin(), local_table_.end(),
                      [&](const Local &local) -> bool {
                        return local.Name == statement->Name;
@@ -244,7 +252,10 @@ auto CodeGen::visit(Assignment *statement) -> void {
       program_.pushCode(std::get<1>(local_offset_bytes), statement->Line);
       program_.pushCode(std::get<2>(local_offset_bytes), statement->Line);
       program_.pushCode(SET_LOCAL, statement->Line);
+<<<<<<< HEAD
       return; 
+=======
+>>>>>>> f6dd640e4efb5d3a5aad7619a5bee53cf1e379ae
     }
   }
   // otherwise its global
@@ -275,8 +286,12 @@ auto CodeGen::visit(BlockScope *statement) -> void {
   // clean up local variables
   for (auto &local : local_table_) {
     if (local.Depth == current_scope_depth_) {
+<<<<<<< HEAD
       program_.pushCode(POP_LOCAL, (statement->Statements.end() - 1)->get()->Line);
       local_table_.erase(local_table_.begin() + local_table_.size() - 1);
+=======
+      program_.pushCode(POP, (statement->Statements.end() - 1)->get()->Line);
+>>>>>>> f6dd640e4efb5d3a5aad7619a5bee53cf1e379ae
     }
   }
   --current_scope_depth_;
