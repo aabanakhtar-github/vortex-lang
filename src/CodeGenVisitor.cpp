@@ -187,7 +187,7 @@ auto CodeGen::visit(VariableDeclaration *statement) -> void {
     if (std::find_if(local_table_.begin(), local_table_.end(),
                      [&](const Local &local) -> bool {
                        return local.Name == statement->Name;
-                     }) != local_table_.end() &&
+                     }) != local_table_.end() ||
         program_.globalExists(statement->Name)) {
       // we already have this variable in a global or local scope
       reportError("Cannot have duplicate variable!", "TODO: filename",

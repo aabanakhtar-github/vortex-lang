@@ -77,6 +77,8 @@ auto Parser::parseStatement() -> StatementPtr {
     return parseIdentifier();
   case TokenType::L_BRACE:
     return parseBlock();
+  case TokenType::IF:
+    return parseIfStatement();
   default: {
     auto invalid_stmt = std::make_unique<InvalidStatement>();
     invalid_stmt->Line = tokens_[pos_].Line; // a little lazy but close
@@ -289,6 +291,7 @@ auto Parser::parseVarDecl(const Token &identifier) -> StatementPtr {
   auto var_decl_stmt = std::make_unique<VariableDeclaration>();
   var_decl_stmt->Type = type;
   var_decl_stmt->Name = name;
+  var_decl_stmt->Line = line;
   var_decl_stmt->AssignedValue = std::move(value);
   return var_decl_stmt;
 }
@@ -334,7 +337,21 @@ auto Parser::parseBlock() -> StatementPtr {
   if (!expect(TokenType::R_BRACE, "Expected } to close block!")) {
     return errorStatement(consume());
   }
-  std::cout << toString(consume().Type) << std::endl;
-  std::cout << toString(peek().Type) << std::endl;
   return block;
+}
+
+auto Parser::parseIfStatement() -> StatementPtr {
+  consume(); // If token
+  if (!expect(TokenType::L_BRACKET, "Expected ( after if statement!")) {
+    return errorStatement(consume());
+  }
+  auto cond = parseExpression();
+  if (!expect(TokenType::R_BRACKET, "Expected ) after if conditional!")) {
+    return errorStatement(consume());
+  }
+  auto if_body = parseStatement();
+  // todo : add else statement lex and parse
+  if (peek().Type == TokenType::ELSE) {
+    return errorStatement();
+  }
 }

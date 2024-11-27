@@ -3,6 +3,7 @@
 
 #include "Token.h"
 #include <memory>
+#include <optional>
 
 // TODO: figure out the consturcotrs mixing ExpressionPtr& and ExpressionPtr&&
 // Operator Precedence (I think) From most important to least, based on C++
@@ -162,6 +163,15 @@ struct Assignment : Statement {
 struct BlockScope : Statement {
   std::vector<std::unique_ptr<Statement>> Statements;
   std::size_t ScopeDepth = 0;
+  virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
+    visitor->visit(this);
+  }
+};
+
+struct IfStatement : Statement {
+  BlockScope IfBody;
+  std::optional<BlockScope> ElseBody;
+  ExpressionPtr Condition;
   virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
     visitor->visit(this);
   }

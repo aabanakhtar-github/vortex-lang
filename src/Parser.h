@@ -38,6 +38,7 @@ private:
   auto parseVarDecl(const Token &identifier_name) -> StatementPtr;
   auto parseAssignment(const Token &identifier_name) -> StatementPtr;
   auto parseBlock() -> StatementPtr;
+  auto parseIfStatement() -> StatementPtr;
 
 private:
   std::size_t pos_ = 0;
