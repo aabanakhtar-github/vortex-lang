@@ -7,6 +7,7 @@
 #include "VortexTypes.h"
 #include <chrono>
 #include <format>
+#include <iostream>
 #include <iterator>
 
 CodeGen::CodeGen(Program &program) : program_{program} {}
@@ -70,7 +71,6 @@ auto CodeGen::visit(UnaryOperation *node) -> void {
   }
 }
 
-#include <iostream>
 auto CodeGen::visit(VariableEval *node) -> void {
   // if we are in a scope and we find the variable name as a local
   auto local_iter = std::find_if(
@@ -281,4 +281,59 @@ auto CodeGen::visit(BlockScope *statement) -> void {
     }
   }
   --current_scope_depth_;
+}
+
+auto CodeGen::visit(IfStatement *node) -> void {
+  node->Condition->acceptVisitor(this);
+  auto tribyte = sizeToTriByte(0);
+  program_.pushCode(PUSHC, node->Line);
+  auto b1 = program_.pushCode(0, node->Line);
+  auto b2 = program_.pushCode(0, node->Line);
+  auto b3 = program_.pushCode(0, node->Line); // these bytes will be filled in
+                                              // after calculating the offsets
+  program_.pushCode(JMP_TO_IF_FALSE,
+                    node->Line); // moves to the else or regular code execution
+  // determine the sizes beforehand so we can write correct jump code
+  auto initial_program_size = program_.Bytecode.size();
+  node->IfBody->acceptVisitor(this);
+  auto if_code_size = program_.Bytecode.size() - initial_program_size;
+  std::size_t eb1, eb2, eb3;
+  if (node->ElseBody.has_value()) {
+    program_.pushCode(PUSHC, node->Line);
+    eb1 = program_.pushCode(0, node->Line);
+    eb2 = program_.pushCode(0, node->Line);
+    eb3 = program_.pushCode(
+        0, node->Line); // these bytes will be filled in
+                        // after calculating the offsets
+                        //  these are  the bytes for skipping the else
+    program_.pushCode(JMP_TO, node->Line);
+    node->ElseBody->get()->acceptVisitor(this);
+    std::cout << "GOOO";
+  }
+  auto else_code_size =
+      program_.Bytecode.size() - if_code_size - initial_program_size;
+  std::cout << if_code_size << std::endl;
+  std::cout << else_code_size << std::endl;
+  // the offsets are now calculated  (zero indexed)
+  auto offset_else_or_false = initial_program_size + if_code_size - 1;
+  auto offset_skip_else = initial_program_size + else_code_size - 1;
+  auto offset_else_or_false_idx = program_.addConstant(VortexValue{
+      .Type = ValueType::DOUBLE,
+      .Value = {.AsDouble = static_cast<double>(offset_else_or_false)}});
+  auto offset_skip_else_idx = program_.addConstant(VortexValue{
+      .Type = ValueType::DOUBLE,
+      .Value = {.AsDouble = static_cast<double>(offset_skip_else)}});
+  // ITS AN ACRONYM
+  auto oefi_tribyte = sizeToTriByte(offset_else_or_false_idx);
+  auto osei_tribyte = sizeToTriByte(offset_skip_else_idx);
+  auto &bytes = program_.Bytecode;
+  // update the bytes with the offsets
+  bytes[b1] = std::get<0>(oefi_tribyte);
+  bytes[b2] = std::get<1>(oefi_tribyte);
+  bytes[b3] = std::get<2>(oefi_tribyte);
+  if (node->ElseBody.has_value()) {
+    bytes[eb1] = std::get<0>(osei_tribyte);
+    bytes[eb2] = std::get<1>(osei_tribyte);
+    bytes[eb3] = std::get<2>(osei_tribyte);
+  }
 }

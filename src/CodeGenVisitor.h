@@ -25,6 +25,7 @@ public:
   auto visit(Literal *node) -> void override;
   auto visit(InvalidExpression *node) -> void override;
   auto visit(VariableEval *node) -> void override;
+  auto visit(IfStatement *node) -> void override;
 
 private:
   std::size_t current_scope_depth_ = 0;

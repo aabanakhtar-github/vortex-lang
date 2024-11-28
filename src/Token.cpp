@@ -139,8 +139,12 @@ auto toString(TokenType type) -> std::string {
   case TokenType::PRINT:
     ss << "PRINT";
     break;
+  case TokenType::ELSE:
+    ss << "ELSE";
+    break;
   default:
     ss << "Bro, what?";
+    break;
   }
   return ss.str();
 }

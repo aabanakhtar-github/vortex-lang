@@ -11,6 +11,7 @@ enum class TokenType {
   FLOAT,
   STRING,
   IF,
+  ELSE,
   FOR,
   WHILE,
   CREATE,

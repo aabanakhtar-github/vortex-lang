@@ -51,7 +51,8 @@ private:
       {"extern", TokenType::EXTERN}, {"true", TokenType::TRUE},
       {"false", TokenType::FALSE},   {"Array", TokenType::ARRAY},
       {"class", TokenType::CLASS},   {"nil", TokenType::NIL},
-      {"print", TokenType::PRINT},   {"fn", TokenType::FN}};
+      {"print", TokenType::PRINT},   {"fn", TokenType::FN},
+      {"else", TokenType::ELSE}};
 };
 
 #endif // LEXER_H

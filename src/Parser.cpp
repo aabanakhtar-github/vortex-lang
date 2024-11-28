@@ -337,21 +337,28 @@ auto Parser::parseBlock() -> StatementPtr {
   if (!expect(TokenType::R_BRACE, "Expected } to close block!")) {
     return errorStatement(consume());
   }
+  std::cout << "hi" << std::endl;
+  consume(); // the right brace
   return block;
 }
 
 auto Parser::parseIfStatement() -> StatementPtr {
-  consume(); // If token
-  if (!expect(TokenType::L_BRACKET, "Expected ( after if statement!")) {
-    return errorStatement(consume());
-  }
+  auto line = consume(); // If token
   auto cond = parseExpression();
-  if (!expect(TokenType::R_BRACKET, "Expected ) after if conditional!")) {
-    return errorStatement(consume());
-  }
   auto if_body = parseStatement();
+  auto else_exists = false;
   // todo : add else statement lex and parse
   if (peek().Type == TokenType::ELSE) {
-    return errorStatement();
+    consume();
+    else_exists = true;
   }
+  auto else_body = else_exists ? parseStatement() : nullptr;
+  auto if_statement = std::make_unique<IfStatement>();
+  if_statement->Line = line.Line;
+  if_statement->IfBody = std::move(if_body);
+  if_statement->ElseBody =
+      else_exists ? decltype(if_statement->ElseBody){std::move(else_body)}
+                  : decltype(if_statement->ElseBody){std::nullopt};
+  if_statement->Condition = std::move(cond);
+  return if_statement;
 }

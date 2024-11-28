@@ -115,7 +115,8 @@ public:
   virtual auto visit(class PrintStatement *statement) -> void = 0;
   virtual auto visit(class VariableDeclaration *statement) -> void = 0;
   virtual auto visit(class Assignment *assignment) -> void = 0;
-  virtual auto visit(class BlockScope *blockScope) -> void = 0;
+  virtual auto visit(class BlockScope *block_scope) -> void = 0;
+  virtual auto visit(class IfStatement *if_statement) -> void = 0;
 };
 
 // *STATEMENTS ARE INDIVIDUAL UNITS OF EXECUTION*
@@ -169,8 +170,8 @@ struct BlockScope : Statement {
 };
 
 struct IfStatement : Statement {
-  BlockScope IfBody;
-  std::optional<BlockScope> ElseBody;
+  StatementPtr IfBody;
+  std::optional<StatementPtr> ElseBody;
   ExpressionPtr Condition;
   virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
     visitor->visit(this);
