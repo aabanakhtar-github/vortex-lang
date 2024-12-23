@@ -80,6 +80,7 @@ auto Parser::parseStatement() -> StatementPtr {
   case TokenType::IF:
     return parseIfStatement();
   case TokenType::WHILE:
+    return parseWhileStatement();
   default: {
     auto invalid_stmt = std::make_unique<InvalidStatement>();
     invalid_stmt->Line = tokens_[pos_].Line; // a little lazy but close
@@ -338,7 +339,6 @@ auto Parser::parseBlock() -> StatementPtr {
   if (!expect(TokenType::R_BRACE, "Expected } to close block!")) {
     return errorStatement(consume());
   }
-  std::cout << "hi" << std::endl;
   consume(); // the right brace
   return block;
 }

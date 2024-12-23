@@ -1,6 +1,7 @@
 #include "CodeGenVisitor.h"
 #include "AST.h"
 #include "Error.h"
+#include "Parser.h"
 #include "Program.h"
 #include "Token.h"
 #include "Util.h"
@@ -285,7 +286,7 @@ auto CodeGen::visit(BlockScope *statement) -> void {
 
 auto CodeGen::visit(IfStatement *node) -> void {
   node->Condition->acceptVisitor(this);
-  auto tribyte = sizeToTriByte(0);
+  // pushing off the false jmp condition
   program_.pushCode(PUSHC, node->Line);
   auto b1 = program_.pushCode(0, node->Line);
   auto b2 = program_.pushCode(0, node->Line);
@@ -308,25 +309,27 @@ auto CodeGen::visit(IfStatement *node) -> void {
                         //  these are  the bytes for skipping the else
     program_.pushCode(JMP_TO, node->Line);
     node->ElseBody->get()->acceptVisitor(this);
-    std::cout << "GOOO";
   }
   auto else_code_size =
       program_.Bytecode.size() - if_code_size - initial_program_size;
   std::cout << if_code_size << std::endl;
   std::cout << else_code_size << std::endl;
   // the offsets are now calculated  (zero indexed)
-  auto offset_else_or_false = initial_program_size + if_code_size +
-                              (node->ElseBody.has_value() ? 5 : 0);
+  auto offset_else_or_false =
+      initial_program_size + if_code_size +
+      (node->ElseBody.has_value()
+           ? 5
+           : 0); // adding 5 accounts for the addition of the else skipping
+                 // bytecode (pushc (4), jmpto (1))
   auto offset_skip_else = initial_program_size + if_code_size + else_code_size;
-  std::cout << "! " << offset_else_or_false << std::endl;
-  std::cout << "! " << offset_skip_else << std::endl;
+  // create them in the constants table
   auto offset_else_or_false_idx = program_.addConstant(VortexValue{
       .Type = ValueType::DOUBLE,
       .Value = {.AsDouble = static_cast<double>(offset_else_or_false)}});
   auto offset_skip_else_idx = program_.addConstant(VortexValue{
       .Type = ValueType::DOUBLE,
       .Value = {.AsDouble = static_cast<double>(offset_skip_else)}});
-  // ITS AN ACRONYM
+  // ITS AN ACRONYM for the locations in the constant table
   auto oefi_tribyte = sizeToTriByte(offset_else_or_false_idx);
   auto osei_tribyte = sizeToTriByte(offset_skip_else_idx);
   auto &bytes = program_.Bytecode;
@@ -339,4 +342,27 @@ auto CodeGen::visit(IfStatement *node) -> void {
     bytes[eb2] = std::get<1>(osei_tribyte);
     bytes[eb3] = std::get<2>(osei_tribyte);
   }
+}
+
+auto CodeGen::visit(WhileStatement *node) -> void {
+  node->Condition->acceptVisitor(this); // accept the condition
+  auto loop_index = program_.Bytecode.size();
+  // false condition push, and jump if the below is false
+  program_.pushCode(PUSHC, node->Line);
+  auto b1 = program_.pushCode(0, node->Line);
+  auto b2 = program_.pushCode(0, node->Line);
+  auto b3 = program_.pushCode(0, node->Line);
+  program_.pushCode(JMP_TO_IF_FALSE, node->Line);
+  node->Body->acceptVisitor(this);
+  // return byte (return to the top of the loop)
+  program_.pushCode(PUSHC, node->Line);
+  auto rb1 = program_.pushCode(0, node->Line);
+  auto rb2 = program_.pushCode(0, node->Line);
+  auto rb3 = program_.pushCode(0, node->Line);
+  program_.pushCode(JMP_TO, node->Line);
+  // the JMP_TO_IF_FALSE will go here
+  auto loop_end = program_.Bytecode.size();
+  // fill in the values of the offsets
+  auto &bytes = program_.Bytecode;
+  // TODO: fill these values out.
 }

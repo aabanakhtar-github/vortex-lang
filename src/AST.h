@@ -117,6 +117,7 @@ public:
   virtual auto visit(class Assignment *assignment) -> void = 0;
   virtual auto visit(class BlockScope *block_scope) -> void = 0;
   virtual auto visit(class IfStatement *if_statement) -> void = 0;
+  virtual auto visit(class WhileStatement *while_statement) -> void = 0;
 };
 
 // *STATEMENTS ARE INDIVIDUAL UNITS OF EXECUTION*
