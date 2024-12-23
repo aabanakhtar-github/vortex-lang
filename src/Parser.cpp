@@ -79,6 +79,7 @@ auto Parser::parseStatement() -> StatementPtr {
     return parseBlock();
   case TokenType::IF:
     return parseIfStatement();
+  case TokenType::WHILE:
   default: {
     auto invalid_stmt = std::make_unique<InvalidStatement>();
     invalid_stmt->Line = tokens_[pos_].Line; // a little lazy but close
@@ -347,7 +348,6 @@ auto Parser::parseIfStatement() -> StatementPtr {
   auto cond = parseExpression();
   auto if_body = parseStatement();
   auto else_exists = false;
-  // todo : add else statement lex and parse
   if (peek().Type == TokenType::ELSE) {
     consume();
     else_exists = true;
@@ -361,4 +361,15 @@ auto Parser::parseIfStatement() -> StatementPtr {
                   : decltype(if_statement->ElseBody){std::nullopt};
   if_statement->Condition = std::move(cond);
   return if_statement;
+}
+
+auto Parser::parseWhileStatement() -> StatementPtr {
+  auto line = consume(); // while token
+  auto condition = parseExpression();
+  auto body = parseStatement();
+  auto statement_ptr = std::make_unique<WhileStatement>();
+  statement_ptr->Condition = std::move(condition);
+  statement_ptr->Body = std::move(body);
+  statement_ptr->Line = line.Line;
+  return statement_ptr;
 }

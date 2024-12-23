@@ -315,8 +315,11 @@ auto CodeGen::visit(IfStatement *node) -> void {
   std::cout << if_code_size << std::endl;
   std::cout << else_code_size << std::endl;
   // the offsets are now calculated  (zero indexed)
-  auto offset_else_or_false = initial_program_size + if_code_size - 1;
-  auto offset_skip_else = initial_program_size + else_code_size - 1;
+  auto offset_else_or_false = initial_program_size + if_code_size +
+                              (node->ElseBody.has_value() ? 5 : 0);
+  auto offset_skip_else = initial_program_size + if_code_size + else_code_size;
+  std::cout << "! " << offset_else_or_false << std::endl;
+  std::cout << "! " << offset_skip_else << std::endl;
   auto offset_else_or_false_idx = program_.addConstant(VortexValue{
       .Type = ValueType::DOUBLE,
       .Value = {.AsDouble = static_cast<double>(offset_else_or_false)}});

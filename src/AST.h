@@ -178,6 +178,14 @@ struct IfStatement : Statement {
   }
 };
 
+struct WhileStatement : Statement {
+  StatementPtr Body;
+  ExpressionPtr Condition;
+  virtual auto acceptVisitor(class StatementVisitor *visitor) -> void {
+    visitor->visit(this);
+  }
+};
+
 struct ProgramNode {
   std::vector<StatementPtr> Statements;
 };
