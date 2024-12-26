@@ -345,8 +345,8 @@ auto CodeGen::visit(IfStatement *node) -> void {
 }
 
 auto CodeGen::visit(WhileStatement *node) -> void {
-  node->Condition->acceptVisitor(this); // accept the condition
   auto loop_index = program_.Bytecode.size();
+  node->Condition->acceptVisitor(this); // accept the condition
   // false condition push, and jump if the below is false
   program_.pushCode(PUSHC, node->Line);
   auto b1 = program_.pushCode(0, node->Line);
@@ -364,5 +364,19 @@ auto CodeGen::visit(WhileStatement *node) -> void {
   auto loop_end = program_.Bytecode.size();
   // fill in the values of the offsets
   auto &bytes = program_.Bytecode;
-  // TODO: fill these values out.
+  // create the constants
+  // start location
+  auto loop_index_index = program_.addConstant(VortexValue{
+      .Type = ValueType::DOUBLE, .Value = {.AsDouble = (double)loop_index}});
+  auto loop_end_index = program_.addConstant(VortexValue{
+      .Type = ValueType::DOUBLE, .Value = {.AsDouble = (double)loop_end}});
+  // IT's ANOTHER ACRONYM
+  auto lii_tribyte = sizeToTriByte(loop_index_index);
+  auto lei_tribyte = sizeToTriByte(loop_end_index);
+  bytes[rb1] = std::get<0>(lii_tribyte);
+  bytes[rb2] = std::get<1>(lii_tribyte);
+  bytes[rb3] = std::get<2>(lii_tribyte);
+  bytes[b1] = std::get<0>(lei_tribyte);
+  bytes[b2] = std::get<1>(lei_tribyte);
+  bytes[b3] = std::get<2>(lei_tribyte);
 }
