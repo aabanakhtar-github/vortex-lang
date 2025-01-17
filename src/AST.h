@@ -5,21 +5,6 @@
 #include <memory>
 #include <optional>
 
-// TODO: figure out the consturcotrs mixing ExpressionPtr& and ExpressionPtr&&
-// Operator Precedence (I think) From most important to least, based on C++
-// Primary Expressions
-// Function Call / Array subscriptsdadf
-// Unary operations
-// Multiplication / Division
-// Addition / Subtraction
-// Relational Comparisions (<= , >=, >, <)
-// Equality Comparisions (==, !=)
-// Logical AND
-// Logical OR
-// Assignment
-// Expression*
-// * expressions are just goofy
-
 class NodeVisitor {
 public:
   virtual auto visit(class Expression *node) -> void = 0;
