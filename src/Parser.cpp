@@ -12,7 +12,7 @@
 
 namespace {
 const auto builtin_types =
-    std::set<TokenType>{TokenType::FLOAT, TokenType::STRING};
+    std::set<TokenType>{TokenType::FLOAT, TokenType::STRING, TokenType::BOOL};
 }
 
 Parser::Parser(std::string_view filename, const std::vector<Token> &tokens)
